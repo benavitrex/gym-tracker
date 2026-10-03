@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0a0a0b">
+<meta name="theme-color" content="#0a0a0b" id="meta-theme">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -57,7 +57,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 
 @media (prefers-reduced-motion:no-preference){.nav-btn,.fab{transition:color .15s,box-shadow .15s}}
 
-/* ===== Sesión activa ===== */
+/* Sesión */
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
 .mu{color:var(--mu)}
 .inp{width:100%;min-width:0;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:10px 4px;font:inherit;text-align:center}
@@ -89,13 +89,13 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .big{font-size:1.8rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
 .rbar .b{display:flex;gap:6px}
 
-/* ===== Calendario ===== */
+/* Calendario */
 .day-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;margin-bottom:12px;overflow:hidden}
-.day-card.today{border-color:var(--ac);box-shadow:0 0 0 1px rgba(255,122,102,.25)}
+.day-card.today{border-color:var(--ac);box-shadow:0 0 0 1px color-mix(in srgb,var(--ac) 25%,transparent)}
 .day-hd{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;user-select:none}
 .day-hd .badge{min-width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
   background:var(--line);font-weight:700;font-size:.85rem;flex-shrink:0}
-.day-card.today .badge{background:rgba(255,122,102,.2);color:var(--ac)}
+.day-card.today .badge{background:color-mix(in srgb,var(--ac) 20%,transparent);color:var(--ac)}
 .day-hd .info{flex:1;min-width:0}
 .day-hd .info strong{display:block;font-size:1rem}
 .day-hd .info span{color:var(--mu);font-size:.8rem}
@@ -131,9 +131,9 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .modal label{display:block;font-size:.8rem;color:var(--mu);margin:10px 0 4px}
 .modal .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
 .modal .chip{padding:6px 12px;border-radius:20px;background:var(--line);font-size:.8rem;font-weight:600}
-.modal .chip.on{background:rgba(255,122,102,.25);color:var(--ac)}
+.modal .chip.on{background:color-mix(in srgb,var(--ac) 25%,transparent);color:var(--ac)}
 
-/* ===== Paso 4: Galería + Mapa muscular ===== */
+/* Galería */
 .search-bar{position:relative;margin-bottom:12px}
 .search-bar input{padding-left:38px}
 .search-bar svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:18px;height:18px;
@@ -142,22 +142,20 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .cat-row::-webkit-scrollbar{display:none}
 .cat-btn{flex-shrink:0;padding:7px 14px;border-radius:20px;background:var(--surface);border:1px solid var(--line);
   font-size:.8rem;font-weight:600;color:var(--mu)}
-.cat-btn.on{background:rgba(255,122,102,.2);border-color:var(--ac);color:var(--ac)}
+.cat-btn.on{background:color-mix(in srgb,var(--ac) 20%,transparent);border-color:var(--ac);color:var(--ac)}
 .ex-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface);border:1px solid var(--line);
   border-radius:14px;margin-bottom:8px;cursor:pointer}
 .ex-item:active{background:var(--line)}
 .ex-item .ico{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-size:1.1rem;flex-shrink:0}
 .ex-item .meta{flex:1;min-width:0}
 .ex-item .meta strong{display:block;font-size:.95rem}
-.ex-item .meta span{font-size:.75rem;color:var(--mu)}
 .ex-item .add-btn{width:36px;height:36px;border-radius:10px;background:var(--line);display:grid;place-items:center;
   font-size:1.2rem;font-weight:700;color:var(--ac);flex-shrink:0}
 .muscle-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .mtag{font-size:.65rem;padding:2px 7px;border-radius:6px;font-weight:600}
-.mtag.p{background:rgba(255,122,102,.2);color:var(--ac)}
+.mtag.p{background:color-mix(in srgb,var(--ac) 20%,transparent);color:var(--ac)}
 .mtag.s{background:rgba(138,138,144,.2);color:var(--mu)}
 
-/* Mapa muscular */
 .map-wrap{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px}
 .map-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .map-hd strong{font-size:.95rem}
@@ -169,21 +167,61 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .map-legend{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px}
 .map-legend span{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--mu)}
 .map-legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
-
-/* Mapa compacto en sesión */
 .map-mini{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:12px}
 .map-mini .map-svg-box svg{max-width:160px}
 .map-mini .map-hd{margin-bottom:6px}
 .map-mini .map-hd strong{font-size:.85rem}
-
-/* Colores de músculos en SVG */
 .m-region{fill:#2a2a2e;stroke:#3a3a40;stroke-width:1;transition:fill .3s}
-.m-region.hot1{fill:#5c3a35}
-.m-region.hot2{fill:#8a4a3e}
-.m-region.hot3{fill:#c45a48}
-.m-region.hot4{fill:#ff7a66}
-.m-region.hot5{fill:#ff9a8a}
+.m-region.hot1{fill:#5c3a35}.m-region.hot2{fill:#8a4a3e}.m-region.hot3{fill:#c45a48}
+.m-region.hot4{fill:#ff7a66}.m-region.hot5{fill:#ff9a8a}
 .body-outline{fill:none;stroke:#3a3a40;stroke-width:1.5}
+
+/* ===== Paso 5: Stats + Settings ===== */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center}
+.kpi b{display:block;font-size:1.35rem;font-weight:800;font-variant-numeric:tabular-nums;margin-bottom:2px}
+.kpi span{font-size:.72rem;color:var(--mu)}
+.kpi .ico{font-size:1.1rem;margin-bottom:4px}
+
+.chart-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px}
+.chart-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.chart-hd strong{font-size:.95rem}
+.chart-range{display:flex;background:var(--bg);border-radius:8px;padding:2px}
+.chart-range button{padding:5px 12px;border-radius:6px;font-size:.75rem;font-weight:600;color:var(--mu)}
+.chart-range button.on{background:var(--line);color:var(--tx)}
+.chart-svg{width:100%;height:140px}
+.chart-empty{text-align:center;color:var(--mu);font-size:.85rem;padding:30px 0}
+
+.goals-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px}
+.goals-card h3{margin:0 0 14px;font-size:.95rem}
+.goals-row{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}
+.goal-ring{display:flex;flex-direction:column;align-items:center;gap:6px;width:90px}
+.goal-ring svg{width:72px;height:72px}
+.goal-ring .pct{font-size:.9rem;font-weight:700}
+.goal-ring .lbl{font-size:.7rem;color:var(--mu);text-align:center;line-height:1.2}
+.goal-add{margin-top:12px}
+
+.records-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px}
+.records-card h3{margin:0 0 10px;font-size:.95rem}
+.rec-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)}
+.rec-row:last-child{border-bottom:0}
+.rec-row .name{font-size:.9rem}
+.rec-row .val{font-weight:700;color:var(--ac);font-variant-numeric:tabular-nums}
+
+/* Settings */
+.set-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.set-card h3{margin:0 0 12px;font-size:.95rem}
+.theme-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.theme-btn{padding:12px;border-radius:12px;border:2px solid var(--line);text-align:left;cursor:pointer}
+.theme-btn.on{border-color:var(--ac)}
+.theme-btn .swatch{display:flex;gap:4px;margin-bottom:6px}
+.theme-btn .swatch i{width:18px;height:18px;border-radius:5px}
+.theme-btn strong{display:block;font-size:.85rem}
+.theme-btn span{font-size:.7rem;color:var(--mu)}
+.unit-row{display:flex;gap:8px}
+.unit-btn{flex:1;padding:12px;border-radius:12px;border:2px solid var(--line);font-weight:700;text-align:center}
+.unit-btn.on{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 15%,transparent);color:var(--ac)}
+.set-actions{display:flex;flex-direction:column;gap:8px;margin-top:4px}
 </style>
 <title>GymTracker</title>
 </head>
@@ -203,9 +241,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
   <!-- 2. ESTADÍSTICAS -->
   <section class="view" data-view="stats" aria-labelledby="t-stats" hidden>
     <header class="vh"><h1 id="t-stats">Estadísticas</h1><p>Analiza tu progreso</p></header>
-    <div class="slot" id="stats-summary">Resumen general</div>
-    <div class="slot" id="stats-charts">Gráficos por ejercicio</div>
-    <div class="slot" id="stats-records">Récords personales</div>
+    <div id="stats-root"></div>
   </section>
 
   <!-- 3. ENTRENAR -->
@@ -232,9 +268,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
   <!-- 5. PERFIL -->
   <section class="view" data-view="profile" aria-labelledby="t-profile" hidden>
     <header class="vh"><h1 id="t-profile">Perfil</h1><p>Datos y ajustes</p></header>
-    <div class="slot" id="profile-data">Mis datos</div>
-    <div class="slot" id="profile-settings">Ajustes (unidades, sonido)</div>
-    <div class="slot" id="profile-backup">Respaldo: exportar / importar</div>
+    <div id="profile-root"></div>
   </section>
 
 </main>
@@ -270,7 +304,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
     <div class="day-preview" id="modal-preview" hidden></div>
     <div class="actions">
       <button class="btn g" onclick="closeStartModal()">Cancelar</button>
-      <button class="btn" id="modal-confirm" onclick="confirmStart()">Empezar</button>
+      <button class="btn" onclick="confirmStart()">Empezar</button>
     </div>
   </div>
 </div>
@@ -295,6 +329,23 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
   </div>
 </div>
 
+<!-- Modal objetivo -->
+<div class="modal-bg" id="goal-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true">
+    <h2>Nuevo objetivo</h2>
+    <p>Meta de peso máximo en un ejercicio</p>
+    <label>Ejercicio</label>
+    <input class="inp l" id="goal-name" list="exlist-goal" maxlength="40" placeholder="Ej. Sentadilla">
+    <datalist id="exlist-goal"></datalist>
+    <label>Peso objetivo (<span id="goal-unit-lbl">kg</span>)</label>
+    <input class="inp" id="goal-target" inputmode="decimal" placeholder="100">
+    <div class="actions" style="margin-top:16px">
+      <button class="btn g" onclick="closeGoalModal()">Cancelar</button>
+      <button class="btn" onclick="saveGoal()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 'use strict';
 const VIEWS = ['home', 'stats', 'train', 'programs', 'profile'];
@@ -311,6 +362,11 @@ S = S || {};
 S.logs = S.logs || [];
 S.plan = S.plan || {};
 S.customEx = S.customEx || [];
+S.settings = S.settings || { theme: 'oled', units: 'kg' };
+S.goals = S.goals || [
+  { name: 'Sentadilla', target: 100 },
+  { name: 'Press de banca', target: 80 }
+];
 
 let ss = null;
 try { ss = JSON.parse(localStorage.getItem('gt_s')); } catch (e) {}
@@ -321,9 +377,52 @@ const saveS = () => { try { ss ? localStorage.setItem('gt_s', JSON.stringify(ss)
 const saveLogs = () => { try { localStorage.setItem('gt', JSON.stringify(S)); } catch (e) {} };
 
 let R = { end: 0, fin: false }, AC = null, wl = null;
-let mapSide = 'front'; // front | back
-let galCat = 'all';
-let galQ = '';
+let mapSide = 'front', galCat = 'all', galQ = '', chartDays = 30;
+
+/* ===== Temas ===== */
+const THEMES = {
+  oled:     { name: 'Dark OLED',  bg: '#0a0a0b', surface: '#141416', line: '#232326', tx: '#f2f2f3', mu: '#8a8a90', ac: '#ff7a66' },
+  dracula:  { name: 'Dracula',    bg: '#1e1f29', surface: '#282a36', line: '#44475a', tx: '#f8f8f2', mu: '#6272a4', ac: '#ff79c6' },
+  rosepine: { name: 'Rosé Pine',  bg: '#191724', surface: '#1f1d2e', line: '#26233a', tx: '#e0def4', mu: '#6e6a86', ac: '#eb6f92' },
+  emerald:  { name: 'Emerald',    bg: '#0b1210', surface: '#12201a', line: '#1c2e26', tx: '#e8f5ef', mu: '#6b8f7a', ac: '#34d399' }
+};
+
+function applyTheme(key) {
+  const t = THEMES[key] || THEMES.oled;
+  S.settings.theme = key;
+  const r = document.documentElement.style;
+  r.setProperty('--bg', t.bg);
+  r.setProperty('--surface', t.surface);
+  r.setProperty('--line', t.line);
+  r.setProperty('--tx', t.tx);
+  r.setProperty('--mu', t.mu);
+  r.setProperty('--ac', t.ac);
+  document.body.style.background = t.bg;
+  const meta = $('#meta-theme');
+  if (meta) meta.content = t.bg;
+  // bottom nav backdrop
+  const nav = document.querySelector('.bottom-nav');
+  if (nav) nav.style.background = t.surface.replace(')', ',.96)').replace('rgb', 'rgba').replace('#', '');
+  // simpler: keep as is, CSS vars handle most
+  saveLogs();
+}
+applyTheme(S.settings.theme || 'oled');
+
+/* ===== Unidades ===== */
+function unitLabel() { return S.settings.units === 'lbs' ? 'lbs' : 'kg'; }
+function toDisplay(kg) {
+  if (S.settings.units === 'lbs') return +(kg * 2.20462).toFixed(1);
+  return +Number(kg).toFixed(1);
+}
+function fromDisplay(v) {
+  const n = num(v);
+  if (S.settings.units === 'lbs') return +(n / 2.20462).toFixed(2);
+  return n;
+}
+function fmtWeight(kg) {
+  const v = toDisplay(kg);
+  return (v % 1 === 0 ? v : v.toFixed(1)) + ' ' + unitLabel();
+}
 
 /* ===== Músculos y biblioteca ===== */
 const MGROUPS = [
@@ -337,7 +436,6 @@ const MGROUPS = [
 const MG = Object.fromEntries(MGROUPS.map(m => [m.k, m]));
 
 const LIB = [
-  // Pecho
   { name: 'Press de banca', cat: 'pecho', primary: ['pecho'], secondary: ['hombros', 'brazos'] },
   { name: 'Press inclinado con barra', cat: 'pecho', primary: ['pecho'], secondary: ['hombros', 'brazos'] },
   { name: 'Press declinado', cat: 'pecho', primary: ['pecho'], secondary: ['brazos'] },
@@ -345,7 +443,6 @@ const LIB = [
   { name: 'Fondos en paralelas', cat: 'pecho', primary: ['pecho', 'brazos'], secondary: ['hombros'] },
   { name: 'Press con mancuernas', cat: 'pecho', primary: ['pecho'], secondary: ['hombros', 'brazos'] },
   { name: 'Crossover en polea', cat: 'pecho', primary: ['pecho'], secondary: [] },
-  // Espalda
   { name: 'Dominadas', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
   { name: 'Jalón al pecho', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
   { name: 'Remo con barra', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
@@ -354,7 +451,6 @@ const LIB = [
   { name: 'Remo en máquina', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
   { name: 'Face pull', cat: 'espalda', primary: ['espalda', 'hombros'], secondary: [] },
   { name: 'Hiperextensiones', cat: 'espalda', primary: ['espalda'], secondary: [] },
-  // Piernas
   { name: 'Sentadilla', cat: 'piernas', primary: ['piernas'], secondary: [] },
   { name: 'Prensa de piernas', cat: 'piernas', primary: ['piernas'], secondary: [] },
   { name: 'Peso muerto rumano', cat: 'piernas', primary: ['piernas'], secondary: ['espalda'] },
@@ -364,7 +460,6 @@ const LIB = [
   { name: 'Elevación de gemelos', cat: 'piernas', primary: ['piernas'], secondary: [] },
   { name: 'Hip thrust', cat: 'piernas', primary: ['piernas'], secondary: [] },
   { name: 'Sentadilla búlgara', cat: 'piernas', primary: ['piernas'], secondary: [] },
-  // Brazos
   { name: 'Curl de bíceps con barra', cat: 'brazos', primary: ['brazos'], secondary: [] },
   { name: 'Curl con mancuernas', cat: 'brazos', primary: ['brazos'], secondary: [] },
   { name: 'Curl martillo', cat: 'brazos', primary: ['brazos'], secondary: [] },
@@ -372,14 +467,12 @@ const LIB = [
   { name: 'Press francés', cat: 'brazos', primary: ['brazos'], secondary: [] },
   { name: 'Fondos de tríceps', cat: 'brazos', primary: ['brazos'], secondary: ['pecho'] },
   { name: 'Curl en polea', cat: 'brazos', primary: ['brazos'], secondary: [] },
-  // Hombros
   { name: 'Press militar', cat: 'hombros', primary: ['hombros'], secondary: ['brazos'] },
   { name: 'Elevaciones laterales', cat: 'hombros', primary: ['hombros'], secondary: [] },
   { name: 'Elevaciones frontales', cat: 'hombros', primary: ['hombros'], secondary: [] },
   { name: 'Pájaros / rear delt', cat: 'hombros', primary: ['hombros'], secondary: ['espalda'] },
   { name: 'Press Arnold', cat: 'hombros', primary: ['hombros'], secondary: ['brazos'] },
   { name: 'Encogimientos de hombros', cat: 'hombros', primary: ['hombros', 'espalda'], secondary: [] },
-  // Abdomen
   { name: 'Crunch', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
   { name: 'Plancha', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
   { name: 'Elevación de piernas', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
@@ -388,9 +481,7 @@ const LIB = [
   { name: 'Cable crunch', cat: 'abdomen', primary: ['abdomen'], secondary: [] }
 ];
 
-function allExercises() {
-  return [...LIB, ...S.customEx];
-}
+function allExercises() { return [...LIB, ...S.customEx]; }
 function findEx(name) {
   const n = name.toLowerCase().trim();
   return allExercises().find(e => e.name.toLowerCase() === n) || null;
@@ -431,10 +522,11 @@ function show(name) {
   if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
   if (name === 'programs') {
     const activeSeg = $$('.seg button.active')[0]?.dataset.seg || 'routines';
-    if (activeSeg === 'routines') renderWeek();
-    else renderGallery();
+    if (activeSeg === 'routines') renderWeek(); else renderGallery();
   }
   if (name === 'train') renderTrain();
+  if (name === 'stats') renderStats();
+  if (name === 'profile') renderProfile();
 }
 
 function showSeg(name) {
@@ -463,7 +555,7 @@ show(location.hash.slice(1) || 'home');
 if ('serviceWorker' in navigator)
   addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 
-/* ===== Calendario (Paso 3) ===== */
+/* ===== Calendario ===== */
 function renderWeek() {
   const root = $('#programs-week');
   if (!root) return;
@@ -513,10 +605,12 @@ function planExCard(key, e, i) {
     <input class="inp" inputmode="numeric" value="${e.rest || 90}" style="width:52px;padding:6px 2px"
       oninput="setPlanRest('${key}',${i},this.value)"><span class="mu">s</span>
     <button class="x" onclick="rmPlanEx('${key}',${i})">✕</button></div>
-    <div class="ptr"><span class="th">N°</span><span class="th">kg</span><span class="th">Reps</span><span class="th"></span></div>`;
+    <div class="ptr"><span class="th">N°</span><span class="th">${unitLabel()}</span><span class="th">Reps</span><span class="th"></span></div>`;
   (e.sets || []).forEach((s, j) => {
+    const disp = s.kg !== '' && s.kg != null ? toDisplay(num(s.kg)) : '';
     h += `<div class="ptr"><span class="nn">${j + 1}</span>
-      <input class="inp" inputmode="decimal" placeholder="kg" value="${esc(s.kg || '')}" oninput="setPlanSet('${key}',${i},${j},'kg',this.value)">
+      <input class="inp" inputmode="decimal" placeholder="${unitLabel()}" value="${disp}"
+        oninput="setPlanSet('${key}',${i},${j},'kg',fromDisplay(this.value))">
       <input class="inp" inputmode="numeric" placeholder="reps" value="${esc(s.reps || '')}" oninput="setPlanSet('${key}',${i},${j},'reps',this.value)">
       <button class="x" onclick="rmPlanSet('${key}',${i},${j})" style="padding:4px">−</button></div>`;
   });
@@ -574,7 +668,7 @@ function openStartModal() {
 function closeStartModal() { $('#start-modal').hidden = true; }
 function confirmStart() { closeStartModal(); startSess(true); show('train'); }
 
-/* ===== Paso 4: Galería de ejercicios ===== */
+/* ===== Galería ===== */
 function renderGallery() {
   const root = $('#gallery-root');
   if (!root) return;
@@ -584,7 +678,7 @@ function renderGallery() {
     return true;
   }).sort((a, b) => a.name.localeCompare(b.name, 'es'));
 
-  let html = `
+  root.innerHTML = `
     <div class="map-wrap">
       <div class="map-hd">
         <strong>Mapa muscular</strong>
@@ -608,9 +702,7 @@ function renderGallery() {
     <button class="btn g" style="margin-bottom:12px" onclick="openCustomModal()">+ Agregar ejercicio personalizado</button>
     ${list.length ? list.map(e => exItemHTML(e)).join('') : '<div class="card mu" style="text-align:center">No se encontraron ejercicios</div>'}
   `;
-  root.innerHTML = html;
 }
-
 function exItemHTML(e) {
   const mg = MG[e.cat] || MGROUPS[0];
   const tags = [
@@ -618,32 +710,22 @@ function exItemHTML(e) {
     ...(e.secondary || []).map(k => `<span class="mtag s">${MG[k]?.label || k}</span>`)
   ].join('');
   return `<div class="ex-item" onclick="highlightMuscles('${esc(e.name)}')">
-    <div class="ico" style="background:rgba(${hexToRgb(mg.color)},.2)">${mg.emoji}</div>
-    <div class="meta"><strong>${esc(e.name)}</strong>
-      <div class="muscle-tags">${tags}</div>
-    </div>
+    <div class="ico" style="background:color-mix(in srgb,${mg.color} 20%,transparent)">${mg.emoji}</div>
+    <div class="meta"><strong>${esc(e.name)}</strong><div class="muscle-tags">${tags}</div></div>
     <button class="add-btn" onclick="event.stopPropagation();quickAddToToday('${esc(e.name)}')" title="Agregar a hoy">+</button>
   </div>`;
 }
-
-function hexToRgb(hex) {
-  const h = hex.replace('#', '');
-  const n = parseInt(h, 16);
-  return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
-}
-
 function setMapSide(side) {
   mapSide = side;
-  // actualizar solo el SVG si estamos en gallery
   const box = $('#gal-map');
   if (box) box.innerHTML = muscleSVG(mapSide, getSessionHeat());
-  // y los botones
-  $$('.map-tog button').forEach(b => b.classList.toggle('on', b.textContent.toLowerCase().includes(side === 'front' ? 'frente' : 'espalda')));
-  // también el mini mapa de sesión
+  $$('.map-tog button').forEach(b => {
+    const isFront = b.textContent.toLowerCase().includes('frente');
+    b.classList.toggle('on', (side === 'front' && isFront) || (side === 'back' && !isFront));
+  });
   const mini = $('#train-map');
   if (mini) mini.innerHTML = muscleSVG(mapSide, getSessionHeat());
 }
-
 function highlightMuscles(name) {
   const { primary, secondary } = getMuscles(name);
   const heat = {};
@@ -652,23 +734,18 @@ function highlightMuscles(name) {
   const box = $('#gal-map');
   if (box) box.innerHTML = muscleSVG(mapSide, heat);
 }
-
 function quickAddToToday(name) {
   const key = getTodayKey();
   const day = ensureDay(key);
   const last = lastSets(name);
-  const sets = last && last.length
-    ? last.map(s => ({ kg: s.kg || '', reps: s.reps || '' }))
-    : [{ kg: '', reps: '' }, { kg: '', reps: '' }, { kg: '', reps: '' }];
+  const sets = last && last.length ? last.map(s => ({ kg: s.kg || '', reps: s.reps || '' })) : [{ kg: '', reps: '' }, { kg: '', reps: '' }, { kg: '', reps: '' }];
   day.exercises.push({ name, rest: 90, sets });
   day._open = true;
   saveLogs();
-  // feedback
   const btn = event?.target;
   if (btn) { btn.textContent = '✓'; setTimeout(() => { btn.textContent = '+'; }, 800); }
 }
 
-/* Custom exercise modal */
 let customSel = { cat: 'pecho', pri: [], sec: [] };
 function openCustomModal() {
   customSel = { cat: 'pecho', pri: [], sec: [] };
@@ -679,14 +756,11 @@ function openCustomModal() {
 function closeCustomModal() { $('#custom-modal').hidden = true; }
 function renderCustomChips() {
   $('#custom-cat').innerHTML = MGROUPS.map(m =>
-    `<button class="chip ${customSel.cat === m.k ? 'on' : ''}" onclick="customSel.cat='${m.k}';renderCustomChips()">${m.label}</button>`
-  ).join('');
+    `<button class="chip ${customSel.cat === m.k ? 'on' : ''}" onclick="customSel.cat='${m.k}';renderCustomChips()">${m.label}</button>`).join('');
   $('#custom-pri').innerHTML = MGROUPS.map(m =>
-    `<button class="chip ${customSel.pri.includes(m.k) ? 'on' : ''}" onclick="togCustom('pri','${m.k}')">${m.label}</button>`
-  ).join('');
+    `<button class="chip ${customSel.pri.includes(m.k) ? 'on' : ''}" onclick="togCustom('pri','${m.k}')">${m.label}</button>`).join('');
   $('#custom-sec').innerHTML = MGROUPS.map(m =>
-    `<button class="chip ${customSel.sec.includes(m.k) ? 'on' : ''}" onclick="togCustom('sec','${m.k}')">${m.label}</button>`
-  ).join('');
+    `<button class="chip ${customSel.sec.includes(m.k) ? 'on' : ''}" onclick="togCustom('sec','${m.k}')">${m.label}</button>`).join('');
 }
 function togCustom(field, k) {
   const arr = customSel[field];
@@ -699,92 +773,61 @@ function saveCustomEx() {
   if (!name) { alert('Escribe un nombre'); return; }
   if (findEx(name)) { alert('Ya existe un ejercicio con ese nombre'); return; }
   if (!customSel.pri.length) { alert('Selecciona al menos un músculo principal'); return; }
-  S.customEx.push({
-    name,
-    cat: customSel.cat,
-    primary: [...customSel.pri],
-    secondary: [...customSel.sec].filter(k => !customSel.pri.includes(k))
-  });
+  S.customEx.push({ name, cat: customSel.cat, primary: [...customSel.pri], secondary: [...customSel.sec].filter(k => !customSel.pri.includes(k)) });
   saveLogs();
   closeCustomModal();
   renderGallery();
 }
 
-/* ===== SVG Mapa muscular ===== */
+/* ===== SVG Mapa ===== */
 function muscleSVG(side, heat = {}) {
-  // heat: { pecho: 1-5, ... }
   const cls = k => {
     const h = heat[k] || 0;
-    if (h >= 5) return 'hot5';
-    if (h >= 4) return 'hot4';
-    if (h >= 3) return 'hot3';
-    if (h >= 2) return 'hot2';
-    if (h >= 1) return 'hot1';
-    return '';
+    if (h >= 5) return 'hot5'; if (h >= 4) return 'hot4'; if (h >= 3) return 'hot3';
+    if (h >= 2) return 'hot2'; if (h >= 1) return 'hot1'; return '';
   };
-
   if (side === 'front') {
     return `<svg viewBox="0 0 200 360" xmlns="http://www.w3.org/2000/svg">
-      <!-- Cabeza -->
       <ellipse cx="100" cy="28" rx="22" ry="26" class="body-outline" fill="#1e1e22"/>
-      <!-- Cuello -->
       <rect x="90" y="50" width="20" height="16" rx="4" fill="#1e1e22" stroke="#3a3a40"/>
-      <!-- Torso outline -->
       <path d="M70 66 Q60 70 55 100 L50 160 Q48 190 55 210 L70 250 L80 250 L100 230 L120 250 L130 250 L145 210 Q152 190 150 160 L145 100 Q140 70 130 66 Z" class="body-outline" fill="#1e1e22"/>
-      <!-- Pecho -->
-      <path d="M72 78 Q100 70 128 78 L130 115 Q100 130 70 115 Z" class="m-region ${cls('pecho')}" data-m="pecho"/>
-      <!-- Hombros (delts front) -->
-      <ellipse cx="58" cy="78" rx="16" ry="14" class="m-region ${cls('hombros')}" data-m="hombros"/>
-      <ellipse cx="142" cy="78" rx="16" ry="14" class="m-region ${cls('hombros')}" data-m="hombros"/>
-      <!-- Abdomen -->
-      <path d="M78 130 Q100 125 122 130 L120 195 Q100 205 80 195 Z" class="m-region ${cls('abdomen')}" data-m="abdomen"/>
-      <!-- Brazos (bíceps) -->
-      <path d="M42 90 Q30 110 32 150 L48 152 Q50 120 55 95 Z" class="m-region ${cls('brazos')}" data-m="brazos"/>
-      <path d="M158 90 Q170 110 168 150 L152 152 Q150 120 145 95 Z" class="m-region ${cls('brazos')}" data-m="brazos"/>
-      <!-- Antebrazos -->
+      <path d="M72 78 Q100 70 128 78 L130 115 Q100 130 70 115 Z" class="m-region ${cls('pecho')}"/>
+      <ellipse cx="58" cy="78" rx="16" ry="14" class="m-region ${cls('hombros')}"/>
+      <ellipse cx="142" cy="78" rx="16" ry="14" class="m-region ${cls('hombros')}"/>
+      <path d="M78 130 Q100 125 122 130 L120 195 Q100 205 80 195 Z" class="m-region ${cls('abdomen')}"/>
+      <path d="M42 90 Q30 110 32 150 L48 152 Q50 120 55 95 Z" class="m-region ${cls('brazos')}"/>
+      <path d="M158 90 Q170 110 168 150 L152 152 Q150 120 145 95 Z" class="m-region ${cls('brazos')}"/>
       <path d="M32 152 L28 200 L44 202 L48 154 Z" fill="#1e1e22" stroke="#3a3a40"/>
       <path d="M168 152 L172 200 L156 202 L152 154 Z" fill="#1e1e22" stroke="#3a3a40"/>
-      <!-- Piernas (cuádriceps) -->
-      <path d="M72 252 Q70 290 68 330 L90 332 Q92 290 95 255 Z" class="m-region ${cls('piernas')}" data-m="piernas"/>
-      <path d="M128 252 Q130 290 132 330 L110 332 Q108 290 105 255 Z" class="m-region ${cls('piernas')}" data-m="piernas"/>
-      <!-- Manos / pies simplificados -->
+      <path d="M72 252 Q70 290 68 330 L90 332 Q92 290 95 255 Z" class="m-region ${cls('piernas')}"/>
+      <path d="M128 252 Q130 290 132 330 L110 332 Q108 290 105 255 Z" class="m-region ${cls('piernas')}"/>
       <ellipse cx="30" cy="208" rx="10" ry="6" fill="#1e1e22" stroke="#3a3a40"/>
       <ellipse cx="170" cy="208" rx="10" ry="6" fill="#1e1e22" stroke="#3a3a40"/>
       <ellipse cx="72" cy="340" rx="14" ry="8" fill="#1e1e22" stroke="#3a3a40"/>
       <ellipse cx="128" cy="340" rx="14" ry="8" fill="#1e1e22" stroke="#3a3a40"/>
     </svg>`;
   }
-
-  // BACK
   return `<svg viewBox="0 0 200 360" xmlns="http://www.w3.org/2000/svg">
     <ellipse cx="100" cy="28" rx="22" ry="26" class="body-outline" fill="#1e1e22"/>
     <rect x="90" y="50" width="20" height="16" rx="4" fill="#1e1e22" stroke="#3a3a40"/>
     <path d="M70 66 Q60 70 55 100 L50 160 Q48 190 55 210 L70 250 L80 250 L100 230 L120 250 L130 250 L145 210 Q152 190 150 160 L145 100 Q140 70 130 66 Z" class="body-outline" fill="#1e1e22"/>
-    <!-- Trapecios / espalda alta -->
-    <path d="M70 70 Q100 60 130 70 L128 100 Q100 110 72 100 Z" class="m-region ${cls('espalda')}" data-m="espalda"/>
-    <!-- Dorsales -->
-    <path d="M68 100 Q55 140 58 185 L78 190 Q80 140 85 110 Z" class="m-region ${cls('espalda')}" data-m="espalda"/>
-    <path d="M132 100 Q145 140 142 185 L122 190 Q120 140 115 110 Z" class="m-region ${cls('espalda')}" data-m="espalda"/>
-    <!-- Espalda media/lumbar -->
-    <path d="M82 160 Q100 155 118 160 L115 200 Q100 210 85 200 Z" class="m-region ${cls('espalda')}" data-m="espalda"/>
-    <!-- Hombros rear -->
-    <ellipse cx="58" cy="78" rx="16" ry="14" class="m-region ${cls('hombros')}" data-m="hombros"/>
-    <ellipse cx="142" cy="78" rx="16" ry="14" class="m-region ${cls('hombros')}" data-m="hombros"/>
-    <!-- Tríceps -->
-    <path d="M42 90 Q30 110 32 150 L48 152 Q50 120 55 95 Z" class="m-region ${cls('brazos')}" data-m="brazos"/>
-    <path d="M158 90 Q170 110 168 150 L152 152 Q150 120 145 95 Z" class="m-region ${cls('brazos')}" data-m="brazos"/>
+    <path d="M70 70 Q100 60 130 70 L128 100 Q100 110 72 100 Z" class="m-region ${cls('espalda')}"/>
+    <path d="M68 100 Q55 140 58 185 L78 190 Q80 140 85 110 Z" class="m-region ${cls('espalda')}"/>
+    <path d="M132 100 Q145 140 142 185 L122 190 Q120 140 115 110 Z" class="m-region ${cls('espalda')}"/>
+    <path d="M82 160 Q100 155 118 160 L115 200 Q100 210 85 200 Z" class="m-region ${cls('espalda')}"/>
+    <ellipse cx="58" cy="78" rx="16" ry="14" class="m-region ${cls('hombros')}"/>
+    <ellipse cx="142" cy="78" rx="16" ry="14" class="m-region ${cls('hombros')}"/>
+    <path d="M42 90 Q30 110 32 150 L48 152 Q50 120 55 95 Z" class="m-region ${cls('brazos')}"/>
+    <path d="M158 90 Q170 110 168 150 L152 152 Q150 120 145 95 Z" class="m-region ${cls('brazos')}"/>
     <path d="M32 152 L28 200 L44 202 L48 154 Z" fill="#1e1e22" stroke="#3a3a40"/>
     <path d="M168 152 L172 200 L156 202 L152 154 Z" fill="#1e1e22" stroke="#3a3a40"/>
-    <!-- Glúteos / isquios -->
-    <path d="M72 248 Q70 280 68 320 L95 322 Q98 280 100 252 Q102 280 105 322 L132 320 Q130 280 128 248 Q100 260 72 248 Z" class="m-region ${cls('piernas')}" data-m="piernas"/>
+    <path d="M72 248 Q70 280 68 320 L95 322 Q98 280 100 252 Q102 280 105 322 L132 320 Q130 280 128 248 Q100 260 72 248 Z" class="m-region ${cls('piernas')}"/>
     <ellipse cx="30" cy="208" rx="10" ry="6" fill="#1e1e22" stroke="#3a3a40"/>
     <ellipse cx="170" cy="208" rx="10" ry="6" fill="#1e1e22" stroke="#3a3a40"/>
     <ellipse cx="75" cy="335" rx="14" ry="8" fill="#1e1e22" stroke="#3a3a40"/>
     <ellipse cx="125" cy="335" rx="14" ry="8" fill="#1e1e22" stroke="#3a3a40"/>
   </svg>`;
 }
-
-/** Calcula el calor muscular de la sesión activa (series efectivas completadas) */
 function getSessionHeat() {
   const heat = {};
   if (!ss) return heat;
@@ -797,13 +840,290 @@ function getSessionHeat() {
   });
   return heat;
 }
-
 function updateTrainMap() {
   const box = $('#train-map');
   if (box) box.innerHTML = muscleSVG(mapSide, getSessionHeat());
 }
 
-/* ===== Sesión de entrenamiento ===== */
+/* ===== Paso 5: Estadísticas ===== */
+function computeStats() {
+  let vol = 0, reps = 0, sets = 0, secs = 0;
+  const byDate = {};
+  const maxByEx = {};
+  S.logs.forEach(l => {
+    secs += l.dur || 0;
+    byDate[l.date] = (byDate[l.date] || 0) + 1;
+    (l.entries || []).forEach(e => {
+      (e.sets || []).forEach(s => {
+        const r = parseInt(s.reps) || 0;
+        const k = num(s.kg);
+        vol += k * r;
+        reps += r;
+        sets += 1;
+        if (k > 0) maxByEx[e.name] = Math.max(maxByEx[e.name] || 0, k);
+      });
+    });
+  });
+  return { vol, reps, sets, secs, byDate, maxByEx };
+}
+
+function chartSVG(days) {
+  const { byDate } = computeStats();
+  const today = new Date();
+  const points = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = dkey(d);
+    points.push({ date: key, n: byDate[key] || 0, label: d.getDate() });
+  }
+  const maxN = Math.max(1, ...points.map(p => p.n));
+  const W = 320, H = 120, padL = 8, padR = 8, padT = 12, padB = 24;
+  const innerW = W - padL - padR, innerH = H - padT - padB;
+
+  if (points.every(p => p.n === 0)) {
+    return `<div class="chart-empty">Aún no hay entrenamientos registrados</div>`;
+  }
+
+  const coords = points.map((p, i) => {
+    const x = padL + (i / (points.length - 1 || 1)) * innerW;
+    const y = padT + innerH - (p.n / maxN) * innerH;
+    return { x, y, ...p };
+  });
+
+  const line = coords.map((c, i) => `${i ? 'L' : 'M'}${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
+  const area = line + ` L${coords[coords.length - 1].x.toFixed(1)},${padT + innerH} L${coords[0].x.toFixed(1)},${padT + innerH} Z`;
+
+  // labels: first, middle, last
+  const labels = [0, Math.floor(coords.length / 2), coords.length - 1].map(i => {
+    const c = coords[i];
+    return `<text x="${c.x}" y="${H - 6}" text-anchor="middle" fill="var(--mu)" font-size="10">${c.label}</text>`;
+  }).join('');
+
+  return `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--ac)" stop-opacity=".35"/>
+        <stop offset="100%" stop-color="var(--ac)" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${area}" fill="url(#cg)"/>
+    <path d="${line}" fill="none" stroke="var(--ac)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    ${coords.filter(c => c.n > 0).map(c =>
+      `<circle cx="${c.x}" cy="${c.y}" r="3.5" fill="var(--ac)" stroke="var(--bg)" stroke-width="1.5"/>`
+    ).join('')}
+    ${labels}
+  </svg>`;
+}
+
+function goalRing(name, target, current) {
+  const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
+  const r = 28, c = 2 * Math.PI * r;
+  const offset = c - (pct / 100) * c;
+  return `<div class="goal-ring">
+    <svg viewBox="0 0 72 72">
+      <circle cx="36" cy="36" r="${r}" fill="none" stroke="var(--line)" stroke-width="6"/>
+      <circle cx="36" cy="36" r="${r}" fill="none" stroke="var(--ac)" stroke-width="6"
+        stroke-dasharray="${c}" stroke-dashoffset="${offset}" stroke-linecap="round"
+        transform="rotate(-90 36 36)" style="transition:stroke-dashoffset .4s"/>
+      <text x="36" y="40" text-anchor="middle" fill="var(--tx)" font-size="14" font-weight="700">${pct}%</text>
+    </svg>
+    <span class="lbl">${esc(name)}<br><span style="color:var(--ac)">${fmtWeight(current)}</span> / ${fmtWeight(target)}</span>
+  </div>`;
+}
+
+function renderStats() {
+  const root = $('#stats-root');
+  if (!root) return;
+  const { vol, reps, sets, secs, maxByEx } = computeStats();
+  const hours = (secs / 3600).toFixed(1);
+  const volStr = vol >= 1000 ? (vol / 1000).toFixed(1) + ' ton' : Math.round(vol) + ' kg';
+  // convert volume display if lbs
+  let volDisplay = volStr;
+  if (S.settings.units === 'lbs' && vol < 1000) {
+    volDisplay = Math.round(vol * 2.20462) + ' lbs';
+  } else if (S.settings.units === 'lbs' && vol >= 1000) {
+    volDisplay = ((vol * 2.20462) / 2000).toFixed(1) + ' ton';
+  }
+
+  root.innerHTML = `
+    <div class="kpi-grid">
+      <div class="kpi"><div class="ico">🏋️</div><b>${volDisplay}</b><span>Volumen total</span></div>
+      <div class="kpi"><div class="ico">🔄</div><b>${reps.toLocaleString('es')}</b><span>Repeticiones</span></div>
+      <div class="kpi"><div class="ico">✅</div><b>${sets.toLocaleString('es')}</b><span>Series completadas</span></div>
+      <div class="kpi"><div class="ico">⏱</div><b>${hours} h</b><span>Horas entrenadas</span></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-hd">
+        <strong>Entrenamientos</strong>
+        <div class="chart-range">
+          <button class="${chartDays === 30 ? 'on' : ''}" onclick="chartDays=30;renderStats()">30 días</button>
+          <button class="${chartDays === 90 ? 'on' : ''}" onclick="chartDays=90;renderStats()">90 días</button>
+        </div>
+      </div>
+      ${chartSVG(chartDays)}
+    </div>
+
+    <div class="goals-card">
+      <h3>Mis Objetivos</h3>
+      <div class="goals-row">
+        ${S.goals.length
+          ? S.goals.map(g => goalRing(g.name, g.target, maxByEx[g.name] || 0)).join('')
+          : '<p class="mu" style="font-size:.85rem;text-align:center;width:100%">Sin objetivos aún</p>'}
+      </div>
+      <button class="btn g goal-add" onclick="openGoalModal()">+ Agregar objetivo</button>
+    </div>
+
+    <div class="records-card">
+      <h3>Récords personales</h3>
+      ${Object.keys(maxByEx).length
+        ? Object.entries(maxByEx).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name, kg]) =>
+            `<div class="rec-row"><span class="name">${esc(name)}</span><span class="val">${fmtWeight(kg)}</span></div>`
+          ).join('')
+        : '<p class="mu" style="font-size:.85rem;text-align:center">Completa entrenamientos para ver récords</p>'}
+    </div>
+  `;
+}
+
+/* Objetivos */
+function openGoalModal() {
+  const names = [...new Set([...allExercises().map(e => e.name), ...S.logs.flatMap(l => l.entries.map(e => e.name))])];
+  $('#exlist-goal').innerHTML = names.map(n => `<option value="${esc(n)}">`).join('');
+  $('#goal-name').value = '';
+  $('#goal-target').value = '';
+  $('#goal-unit-lbl').textContent = unitLabel();
+  $('#goal-modal').hidden = false;
+}
+function closeGoalModal() { $('#goal-modal').hidden = true; }
+function saveGoal() {
+  const name = $('#goal-name').value.trim();
+  const targetDisp = num($('#goal-target').value);
+  if (!name || !targetDisp) { alert('Completa ejercicio y peso objetivo'); return; }
+  const target = fromDisplay(targetDisp); // store in kg
+  const existing = S.goals.find(g => g.name.toLowerCase() === name.toLowerCase());
+  if (existing) existing.target = target;
+  else S.goals.push({ name, target });
+  saveLogs();
+  closeGoalModal();
+  renderStats();
+}
+
+/* ===== Paso 5: Perfil / Ajustes ===== */
+function renderProfile() {
+  const root = $('#profile-root');
+  if (!root) return;
+  const theme = S.settings.theme || 'oled';
+  const units = S.settings.units || 'kg';
+  const nLogs = S.logs.length;
+  const nCustom = S.customEx.length;
+
+  root.innerHTML = `
+    <div class="set-card">
+      <h3>Resumen</h3>
+      <div class="rec-row"><span class="name">Entrenamientos guardados</span><span class="val">${nLogs}</span></div>
+      <div class="rec-row"><span class="name">Ejercicios personalizados</span><span class="val">${nCustom}</span></div>
+      <div class="rec-row"><span class="name">Objetivos activos</span><span class="val">${S.goals.length}</span></div>
+    </div>
+
+    <div class="set-card">
+      <h3>Tema de color</h3>
+      <div class="theme-grid">
+        ${Object.entries(THEMES).map(([k, t]) => `
+          <button class="theme-btn ${theme === k ? 'on' : ''}" onclick="setTheme('${k}')">
+            <div class="swatch">
+              <i style="background:${t.bg};border:1px solid ${t.line}"></i>
+              <i style="background:${t.surface}"></i>
+              <i style="background:${t.ac}"></i>
+            </div>
+            <strong>${t.name}</strong>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="set-card">
+      <h3>Unidades de peso</h3>
+      <div class="unit-row">
+        <button class="unit-btn ${units === 'kg' ? 'on' : ''}" onclick="setUnits('kg')">kg</button>
+        <button class="unit-btn ${units === 'lbs' ? 'on' : ''}" onclick="setUnits('lbs')">lbs</button>
+      </div>
+    </div>
+
+    <div class="set-card">
+      <h3>Respaldo de datos</h3>
+      <div class="set-actions">
+        <button class="btn" onclick="exportData()">Exportar datos (JSON)</button>
+        <button class="btn g" onclick="importData()">Importar datos</button>
+        <button class="btn g" onclick="clearData()" style="color:#ff6b6b">Borrar todos los datos</button>
+      </div>
+      <input type="file" id="import-file" accept=".json,application/json" hidden onchange="handleImport(event)">
+    </div>
+  `;
+}
+
+function setTheme(key) {
+  applyTheme(key);
+  renderProfile();
+}
+function setUnits(u) {
+  S.settings.units = u;
+  saveLogs();
+  renderProfile();
+  // refresh open views that show weights
+  if (!$('.view[data-view="stats"]').hidden) renderStats();
+  if (!$('.view[data-view="train"]').hidden) renderTrain();
+  if (!$('.view[data-view="programs"]').hidden) {
+    const seg = $$('.seg button.active')[0]?.dataset.seg;
+    if (seg === 'routines') renderWeek();
+  }
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `gymtracker-backup-${dkey(new Date())}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importData() { $('#import-file').click(); }
+function handleImport(ev) {
+  const file = ev.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data || typeof data !== 'object') throw new Error('Formato inválido');
+      if (!confirm('¿Importar estos datos? Se sobrescribirán los actuales.')) return;
+      S.logs = data.logs || [];
+      S.plan = data.plan || {};
+      S.customEx = data.customEx || [];
+      S.settings = data.settings || S.settings;
+      S.goals = data.goals || S.goals;
+      saveLogs();
+      applyTheme(S.settings.theme || 'oled');
+      alert('Datos importados correctamente');
+      renderProfile();
+    } catch (e) {
+      alert('Error al importar: archivo inválido');
+    }
+    ev.target.value = '';
+  };
+  reader.readAsText(file);
+}
+function clearData() {
+  if (!confirm('¿Borrar TODOS los datos? Esta acción no se puede deshacer.')) return;
+  if (!confirm('Confirma de nuevo: se eliminarán logs, rutinas, objetivos y ejercicios personalizados.')) return;
+  S = { logs: [], plan: {}, customEx: [], settings: S.settings, goals: [] };
+  saveLogs();
+  ss = null; saveS();
+  alert('Datos borrados');
+  renderProfile();
+}
+
+/* ===== Sesión ===== */
 function lastSets(n) {
   for (const l of [...S.logs].sort((a, b) => a.date < b.date ? 1 : -1)) {
     const e = l.entries.find(e => e.name === n);
@@ -827,19 +1147,23 @@ function sumHTML(e) {
     }
   });
   const avg = reps ? vol / reps : 0;
-  const vt = vol >= 1000 ? (vol / 1000).toFixed(1) + ' ton' : Math.round(vol) + ' kg';
-  return `<div><b>${vt}</b><span>Volumen total</span></div><div><b>${reps}</b><span>Reps totales</span></div><div><b>${avg ? avg.toFixed(1) : 0} kg</b><span>Peso promedio</span></div>`;
+  const vt = S.settings.units === 'lbs'
+    ? (vol >= 453.6 ? ((vol * 2.20462) / 2000).toFixed(1) + ' ton' : Math.round(vol * 2.20462) + ' lbs')
+    : (vol >= 1000 ? (vol / 1000).toFixed(1) + ' ton' : Math.round(vol) + ' kg');
+  return `<div><b>${vt}</b><span>Volumen total</span></div><div><b>${reps}</b><span>Reps totales</span></div><div><b>${avg ? toDisplay(avg).toFixed(1) : 0} ${unitLabel()}</b><span>Peso promedio</span></div>`;
 }
 function exCard(e, i) {
   let h = `<div class="card ex"><div class="ex-h"><h2>${esc(e.name)}</h2><span class="mu">⏱</span>
- <input class="inp" inputmode="numeric" value="${e.rest}" aria-label="Descanso" oninput="ss.entries[${i}].rest=parseInt(this.value)||0;saveS()"><span class="mu">s</span>
+ <input class="inp" inputmode="numeric" value="${e.rest}" oninput="ss.entries[${i}].rest=parseInt(this.value)||0;saveS()"><span class="mu">s</span>
  <button class="x" onclick="rmEx(${i})">✕</button></div>
- <div class="tr"><span class="th">N°</span><span class="th">Tipo</span><span class="th">kg</span><span class="th">Reps</span><span class="th">✓</span></div>`;
+ <div class="tr"><span class="th">N°</span><span class="th">Tipo</span><span class="th">${unitLabel()}</span><span class="th">Reps</span><span class="th">✓</span></div>`;
   e.sets.forEach((s, j) => {
     const w = s.t === 'W';
+    const disp = s.kg !== '' && s.kg != null ? toDisplay(num(s.kg)) : '';
     h += `<div class="tr"><span class="nn">${numLabel(e, j)}</span>
   <button class="ty ${w ? 'w' : 'e'}" onclick="tgl(${i},${j})">${w ? 'Calent.' : 'Efectiva'}</button>
-  <input class="inp" inputmode="decimal" placeholder="kg" value="${esc(s.kg)}" oninput="inp(${i},${j},'kg',this.value)">
+  <input class="inp" inputmode="decimal" placeholder="${unitLabel()}" value="${disp}"
+    oninput="inp(${i},${j},'kg',fromDisplay(this.value))">
   <input class="inp" inputmode="numeric" placeholder="reps" value="${esc(s.reps)}" oninput="inp(${i},${j},'reps',this.value)">
   <button class="ck ${s.done ? 'on' : ''}" onclick="tick(${i},${j},this)">✓</button></div>`;
   });
@@ -859,8 +1183,6 @@ function renderTrain() {
   }
   let h = `<div class="sh"><input class="ttl" value="${esc(ss.title)}" maxlength="40" oninput="ss.title=this.value;saveS()">
   <span class="clk" id="g-time">00:00</span><button class="btn fin" onclick="finish()">Finalizar</button></div>`;
-
-  // Mapa muscular en vivo
   h += `<div class="map-mini">
     <div class="map-hd">
       <strong>Trabajo muscular de la sesión</strong>
@@ -871,7 +1193,6 @@ function renderTrain() {
     </div>
     <div class="map-svg-box" id="train-map">${muscleSVG(mapSide, getSessionHeat())}</div>
   </div>`;
-
   if (!ss.entries.length) h += `<div class="card mu" style="text-align:center">Aún no hay ejercicios. Agrega el primero abajo.</div>`;
   ss.entries.forEach((e, i) => h += exCard(e, i));
   h += `${dl}<div class="addx"><input class="inp l" id="nx" list="exlist" placeholder="Nombre del ejercicio" maxlength="40" onkeydown="if(event.key==='Enter')addEx()"></div>
@@ -886,71 +1207,42 @@ function renderTrain() {
 async function lock() {
   try { if (ss && !document.hidden) wl = await navigator.wakeLock.request('screen'); } catch (e) {}
 }
-
 function startSess(fromPlan = false) {
-  let title = 'Entrenamiento';
-  let entries = [];
+  let title = 'Entrenamiento', entries = [];
   if (fromPlan) {
     const key = getTodayKey();
     const day = S.plan[key];
     if (day && day.exercises && day.exercises.length) {
       title = day.title || DAYS.find(d => d.k === key)?.n || title;
       entries = day.exercises.map(e => ({
-        name: e.name,
-        rest: e.rest || 90,
-        sets: (e.sets || []).map(s => ({
-          t: 'E',
-          kg: s.kg != null ? String(s.kg) : '',
-          reps: s.reps != null ? String(s.reps) : '',
-          done: false
-        }))
+        name: e.name, rest: e.rest || 90,
+        sets: (e.sets || []).map(s => ({ t: 'E', kg: s.kg != null ? String(s.kg) : '', reps: s.reps != null ? String(s.reps) : '', done: false }))
       }));
     }
   }
   ss = { title, date: dkey(new Date()), start: Date.now(), entries };
-  saveS();
-  renderTrain();
-  lock();
+  saveS(); renderTrain(); lock();
 }
-
 function addEx() {
   const n = $('#nx').value.trim();
   if (!n) return;
   const l = lastSets(n);
-  const sets = l && l.length
-    ? l.map(s => ({ t: 'E', kg: s.kg, reps: s.reps, done: false }))
-    : [0, 1, 2].map(() => ({ t: 'E', kg: '', reps: '', done: false }));
+  const sets = l && l.length ? l.map(s => ({ t: 'E', kg: s.kg, reps: s.reps, done: false })) : [0, 1, 2].map(() => ({ t: 'E', kg: '', reps: '', done: false }));
   ss.entries.push({ name: n, rest: 90, sets });
-  saveS();
-  renderTrain();
+  saveS(); renderTrain();
   const c = document.querySelectorAll('.ex');
   c[c.length - 1].scrollIntoView({ block: 'center' });
 }
-function rmEx(i) {
-  if (!confirm('¿Quitar este ejercicio?')) return;
-  ss.entries.splice(i, 1);
-  saveS();
-  renderTrain();
-}
+function rmEx(i) { if (!confirm('¿Quitar este ejercicio?')) return; ss.entries.splice(i, 1); saveS(); renderTrain(); }
 function addS(i) {
   const s = ss.entries[i].sets, l = s[s.length - 1];
   s.push({ t: 'E', kg: l ? l.kg : '', reps: l ? l.reps : '', done: false });
-  saveS();
-  renderTrain();
+  saveS(); renderTrain();
 }
-function rmS(i) {
-  ss.entries[i].sets.pop();
-  saveS();
-  renderTrain();
-}
-function tgl(i, j) {
-  const s = ss.entries[i].sets[j];
-  s.t = s.t === 'W' ? 'E' : 'W';
-  saveS();
-  renderTrain();
-}
+function rmS(i) { ss.entries[i].sets.pop(); saveS(); renderTrain(); }
+function tgl(i, j) { const s = ss.entries[i].sets[j]; s.t = s.t === 'W' ? 'E' : 'W'; saveS(); renderTrain(); }
 function inp(i, j, f, v) {
-  ss.entries[i].sets[j][f] = v;
+  ss.entries[i].sets[j][f] = f === 'kg' ? v : v;
   saveS();
   $('#sum-' + i).innerHTML = sumHTML(ss.entries[i]);
 }
@@ -961,32 +1253,24 @@ function tick(i, j, b) {
   $('#sum-' + i).innerHTML = sumHTML(e);
   if (s.done && e.rest > 0) startRest(e.rest);
   saveS();
-  updateTrainMap(); // ← sincronización muscular en vivo
+  updateTrainMap();
 }
 function finish() {
   const ent = ss.entries
-    .map(e => ({
-      name: e.name,
-      sets: e.sets.filter(s => s.done && s.t !== 'W').map(s => ({ kg: num(s.kg), reps: parseInt(s.reps) || 0 }))
-    }))
+    .map(e => ({ name: e.name, sets: e.sets.filter(s => s.done && s.t !== 'W').map(s => ({ kg: num(s.kg), reps: parseInt(s.reps) || 0 })) }))
     .filter(e => e.sets.length);
   if (ent.length) {
     if (!confirm('¿Finalizar y guardar el entrenamiento?')) return;
     S.logs.push({ date: ss.date, title: ss.title, dur: Math.round((Date.now() - ss.start) / 1000), entries: ent });
     saveLogs();
   } else if (!confirm('No completaste ninguna serie efectiva. ¿Descartar el entrenamiento?')) return;
-  ss = null;
-  saveS();
-  R = { end: 0, fin: false };
+  ss = null; saveS(); R = { end: 0, fin: false };
   try { wl && wl.release(); } catch (e) {}
-  renderTrain();
-  show('home');
+  renderTrain(); show('home');
 }
 
 /* Cronómetros */
-function unlock() {
-  try { AC = AC || new (window.AudioContext || webkitAudioContext)(); AC.resume(); } catch (e) {}
-}
+function unlock() { try { AC = AC || new (window.AudioContext || webkitAudioContext)(); AC.resume(); } catch (e) {} }
 function beep() {
   try {
     const o = AC.createOscillator(), g = AC.createGain();
@@ -996,15 +1280,8 @@ function beep() {
   } catch (e) {}
   navigator.vibrate && navigator.vibrate([250, 100, 250]);
 }
-function startRest(sec) {
-  unlock();
-  R = { end: sec > 0 ? Date.now() + sec * 1000 : 0, fin: false };
-  tickUI();
-}
-function adj(d) {
-  if (R.end) R.end = Math.max(Date.now() + 1000, R.end + d * 1000);
-  tickUI();
-}
+function startRest(sec) { unlock(); R = { end: sec > 0 ? Date.now() + sec * 1000 : 0, fin: false }; tickUI(); }
+function adj(d) { if (R.end) R.end = Math.max(Date.now() + 1000, R.end + d * 1000); tickUI(); }
 function tickUI() {
   if (!ss) return;
   const g = $('#g-time');
@@ -1013,15 +1290,8 @@ function tickUI() {
   if (!rt) return;
   if (R.end) {
     const left = Math.ceil((R.end - Date.now()) / 1000);
-    if (left <= 0) {
-      R = { end: 0, fin: true };
-      beep();
-    } else {
-      rt.textContent = fmt(left);
-      rl.textContent = 'Descansando';
-      bar.classList.add('go');
-      return;
-    }
+    if (left <= 0) { R = { end: 0, fin: true }; beep(); }
+    else { rt.textContent = fmt(left); rl.textContent = 'Descansando'; bar.classList.add('go'); return; }
   }
   bar.classList.remove('go');
   rt.textContent = R.fin ? '¡Listo!' : '--:--';
@@ -1033,10 +1303,12 @@ document.addEventListener('visibilitychange', lock);
 /* Modales */
 $('#start-modal').addEventListener('click', e => { if (e.target.id === 'start-modal') closeStartModal(); });
 $('#custom-modal').addEventListener('click', e => { if (e.target.id === 'custom-modal') closeCustomModal(); });
+$('#goal-modal').addEventListener('click', e => { if (e.target.id === 'goal-modal') closeGoalModal(); });
 addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (!$('#start-modal').hidden) closeStartModal();
     if (!$('#custom-modal').hidden) closeCustomModal();
+    if (!$('#goal-modal').hidden) closeGoalModal();
   }
 });
 
