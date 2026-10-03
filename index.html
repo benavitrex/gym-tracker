@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1013">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GymTracker">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>GymTracker</title>
+<style>
+:root{--bg:#0e1013;--card:#171b21;--line:#252b33;--tx:#eef1f4;--mu:#8b95a1;--ac:#ff7a66;--gr:#4ad8a0;box-sizing:border-box}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+main{flex:1;overflow-y:auto;padding:16px 16px 24px;max-width:560px;width:100%;margin:0 auto}
+h1{font-size:1.5rem;margin:4px 0 2px}h2{font-size:1rem;margin:0 0 10px}
+.sub{color:var(--mu);font-size:.85rem;margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px}
+.stat b{display:block;font-size:1.3rem}.stat span{color:var(--mu);font-size:.72rem}
+.week{display:flex;justify-content:space-between}
+.day{width:12.5%;text-align:center;font-size:.7rem;color:var(--mu)}
+.dot{width:30px;height:30px;border-radius:50%;margin:5px auto 0;border:2px solid var(--line);display:grid;place-items:center;font-size:.8rem}
+.dot.on{background:var(--gr);border-color:var(--gr);color:#06281c}.dot.today{border-color:var(--ac)}
+svg{width:100%;height:auto;display:block}
+select,input{background:#0e1013;color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:1rem;width:100%}
+.row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.row input{text-align:center}.row .n{width:28px;color:var(--mu);text-align:center;flex:none}
+button{background:var(--ac);color:#2a0c07;border:0;border-radius:12px;padding:12px 14px;font-weight:700;font-size:.95rem}
+button.g{background:var(--line);color:var(--tx)}button.f{width:100%}
+.x{background:none;color:var(--mu);padding:6px 10px;font-size:1.1rem}
+.chip{display:flex;justify-content:space-between;align-items:center;background:#0e1013;border-radius:10px;padding:4px 4px 4px 12px;margin-bottom:6px}
+.add{display:flex;gap:8px;margin-top:8px}.add button{flex:none}
+.empty{color:var(--mu);font-size:.9rem;text-align:center;padding:18px 0}
+nav{display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{flex:1;background:none;color:var(--mu);border-radius:0;padding:12px 0;font-size:.78rem;font-weight:600}
+nav button.on{color:var(--ac)}nav i{display:block;font-style:normal;font-size:1.25rem}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<nav>
+ <button data-t="home"><i>▦</i>Inicio</button>
+ <button data-t="train"><i>◉</i>Entrenar</button>
+ <button data-t="plan"><i>☰</i>Rutina</button>
+</nav>
+<script>
+const DAYS=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+const $=s=>document.querySelector(s);
+let S;try{S=JSON.parse(localStorage.getItem('gt'))}catch(e){}
+S=S||{routine:{},logs:[]};
+const save=()=>{try{localStorage.setItem('gt',JSON.stringify(S))}catch(e){}};
+const k=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const pd=s=>{const[a,b,c]=s.split('-');return new Date(+a,b-1,+c)};
+const wd=d=>(d.getDay()+6)%7;
+const mon=d=>{const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-wd(x));return x};
+const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let tab='home',draft=null,selEx=null;
+
+/* ---------- datos ---------- */
+const logOn=ds=>S.logs.find(l=>l.date===ds);
+const vol=l=>l.entries.reduce((a,e)=>a+e.sets.reduce((b,s)=>b+s.kg*s.reps,0),0);
+function exercisesLogged(){const m=new Set();S.logs.forEach(l=>l.entries.forEach(e=>m.add(e.name)));return[...m]}
+function series(name){return S.logs.filter(l=>l.entries.some(e=>e.name===name)).sort((a,b)=>a.date<b.date?-1:1)
+ .map(l=>({d:l.date,v:Math.max(...l.entries.find(e=>e.name===name).sets.map(s=>s.kg))}))}
+function lastSets(name){const ls=[...S.logs].sort((a,b)=>a.date<b.date?1:-1);
+ for(const l of ls){const e=l.entries.find(e=>e.name===name);if(e)return e.sets.map(s=>({...s}))}return null}
+function weeklyCounts(n){const m0=mon(new Date()),out=[];
+ for(let i=n-1;i>=0;i--){const a=new Date(m0);a.setDate(a.getDate()-7*i);const b=new Date(a);b.setDate(b.getDate()+7);
+  out.push({a,c:S.logs.filter(l=>{const d=pd(l.date);return d>=a&&d<b}).length})}return out}
+function streak(){const w=weeklyCounts(52).reverse();let i=w[0].c?0:1,n=0;for(;i<w.length&&w[i].c;i++)n++;return n}
+
+/* ---------- gráficos SVG ---------- */
+function barChart(w){const max=Math.max(3,...w.map(x=>x.c)),W=320,H=130,bw=W/w.length;
+ let s=`<svg viewBox="0 0 ${W} ${H+22}" role="img" aria-label="Asistencia semanal">`;
+ w.forEach((x,i)=>{const h=x.c/max*H,xx=i*bw+6;
+  s+=`<rect x="${xx}" y="${H-h}" width="${bw-12}" height="${Math.max(h,2)}" rx="5" fill="${x.c?'#4ad8a0':'#252b33'}"/>`;
+  if(x.c)s+=`<text x="${xx+(bw-12)/2}" y="${H-h-5}" fill="#eef1f4" font-size="11" text-anchor="middle">${x.c}</text>`;
+  s+=`<text x="${xx+(bw-12)/2}" y="${H+15}" fill="#8b95a1" font-size="10" text-anchor="middle">${x.a.getDate()}/${x.a.getMonth()+1}</text>`});
+ return s+'</svg>'}
+function lineChart(p){if(p.length<2)return`<div class="empty">${p.length?'Registra otra sesión para ver la curva.':'Sin datos aún.'}</div>`;
+ const W=320,H=130,P=26,vs=p.map(x=>x.v),mn=Math.min(...vs),mx=Math.max(...vs),r=(mx-mn)||1;
+ const X=i=>P+i*(W-2*P)/(p.length-1),Y=v=>H-8-(v-mn)/r*(H-30);
+ const pts=p.map((x,i)=>`${X(i)},${Y(x.v)}`).join(' ');
+ let s=`<svg viewBox="0 0 ${W} ${H+16}" role="img" aria-label="Progreso de peso"><polyline points="${pts}" fill="none" stroke="#ff7a66" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
+ p.forEach((x,i)=>{s+=`<circle cx="${X(i)}" cy="${Y(x.v)}" r="4" fill="#ff7a66"/>`;
+  if(p.length<=8||i===0||i===p.length-1)s+=`<text x="${X(i)}" y="${Y(x.v)-9}" fill="#eef1f4" font-size="10" text-anchor="middle">${x.v}</text>`});
+ const f=pd(p[0].d),l=pd(p[p.length-1].d);
+ s+=`<text x="${P}" y="${H+12}" fill="#8b95a1" font-size="10">${f.getDate()}/${f.getMonth()+1}</text><text x="${W-P}" y="${H+12}" fill="#8b95a1" font-size="10" text-anchor="end">${l.getDate()}/${l.getMonth()+1}</text></svg>`;
+ return s}
+
+/* ---------- vistas ---------- */
+function home(){
+ const now=new Date(),m0=mon(now),ms=k(new Date(now.getFullYear(),now.getMonth(),1));
+ const monthLogs=S.logs.filter(l=>l.date>=ms);
+ let wk='';for(let i=0;i<7;i++){const d=new Date(m0);d.setDate(d.getDate()+i);const ds=k(d);
+  wk+=`<div class="day">${DAYS[i]}<div class="dot ${logOn(ds)?'on':''} ${ds===k(now)?'today':''}">${logOn(ds)?'✓':''}</div></div>`}
+ const exs=exercisesLogged();if(!exs.includes(selEx))selEx=exs[0]||null;
+ const p=selEx?series(selEx):[],delta=p.length>1?p[p.length-1].v-p[0].v:null;
+ return`<h1>Hola, a entrenar</h1><p class="sub">${now.toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'})}</p>
+ <div class="stats"><div class="stat"><b>${monthLogs.length}</b><span>sesiones este mes</span></div>
+ <div class="stat"><b>${streak()}</b><span>semanas seguidas</span></div>
+ <div class="stat"><b>${Math.round(monthLogs.reduce((a,l)=>a+vol(l),0)/1000*10)/10}</b><span>ton levantadas</span></div></div>
+ <div class="card"><h2>Esta semana</h2><div class="week">${wk}</div></div>
+ <div class="card"><h2>Asistencia: sesiones por semana</h2>${barChart(weeklyCounts(8))}</div>
+ <div class="card"><h2>Progreso de peso (máx. por sesión)</h2>
+ ${exs.length?`<select onchange="selEx=this.value;render()">${exs.map(e=>`<option ${e===selEx?'selected':''}>${esc(e)}</option>`).join('')}</select>
+ <div style="height:10px"></div>${lineChart(p)}${delta!==null?`<p class="sub" style="margin:8px 0 0">${delta>=0?'+':''}${delta} kg desde la primera sesión</p>`:''}`
+ :'<div class="empty">Registra tu primer entrenamiento en la pestaña Entrenar.</div>'}</div>`}
+
+function buildDraft(ds){
+ const ex=logOn(ds),d=pd(ds);
+ if(ex)return{date:ds,entries:JSON.parse(JSON.stringify(ex.entries))};
+ const names=S.routine[wd(d)]||[];
+ return{date:ds,entries:names.map(n=>({name:n,sets:lastSets(n)||[{kg:'',reps:''},{kg:'',reps:''},{kg:'',reps:''}]}))}}
+function train(){
+ if(!draft)draft=buildDraft(k(new Date()));
+ const d=pd(draft.date);
+ let h=`<h1>Entrenar</h1><p class="sub">${DAYS[wd(d)]} · ${logOn(draft.date)?'editando sesión guardada':'nueva sesión'}</p>
+ <div class="card"><input type="date" value="${draft.date}" onchange="draft=buildDraft(this.value||k(new Date()));render()"></div>`;
+ if(!draft.entries.length)h+=`<div class="empty">No hay ejercicios para este día. Agrégalos abajo o define tu <b>Rutina</b>.</div>`;
+ draft.entries.forEach((e,i)=>{
+  h+=`<div class="card"><div class="row"><h2 style="flex:1;margin:0">${esc(e.name)}</h2><button class="x" onclick="rmEx(${i})" aria-label="Quitar">✕</button></div>`;
+  e.sets.forEach((s,j)=>{h+=`<div class="row"><span class="n">${j+1}</span>
+   <input inputmode="decimal" placeholder="kg" value="${s.kg}" oninput="draft.entries[${i}].sets[${j}].kg=this.value">
+   <input inputmode="numeric" placeholder="reps" value="${s.reps}" oninput="draft.entries[${i}].sets[${j}].reps=this.value">
+   <button class="x" onclick="rmSet(${i},${j})" aria-label="Quitar serie">−</button></div>`});
+  h+=`<button class="g f" onclick="addSet(${i})">+ Serie</button></div>`});
+ h+=`<div class="add"><input id="nx" placeholder="Ejercicio extra" maxlength="40"><button class="g" onclick="addEx()">Añadir</button></div>
+ <div style="height:14px"></div><button class="f" onclick="finish()">Guardar entrenamiento</button>`;
+ return h}
+function plan(){
+ let h=`<h1>Rutina</h1><p class="sub">Define qué ejercicios haces cada día.</p>`;
+ for(let i=0;i<7;i++){const l=S.routine[i]||[];
+  h+=`<div class="card"><h2>${['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'][i]}</h2>
+  ${l.map((n,j)=>`<div class="chip">${esc(n)}<button class="x" onclick="rmPlan(${i},${j})" aria-label="Quitar">✕</button></div>`).join('')||'<div class="sub" style="margin:0">Día libre</div>'}
+  <div class="add"><input id="p${i}" placeholder="Añadir ejercicio" maxlength="40" onkeydown="if(event.key==='Enter')addPlan(${i})"><button class="g" onclick="addPlan(${i})">+</button></div></div>`}
+ return h}
+
+/* ---------- acciones ---------- */
+function addSet(i){const s=draft.entries[i].sets,l=s[s.length-1];s.push({kg:l?l.kg:'',reps:l?l.reps:''});render()}
+function rmSet(i,j){draft.entries[i].sets.splice(j,1);render()}
+function rmEx(i){draft.entries.splice(i,1);render()}
+function addEx(){const v=$('#nx').value.trim();if(!v)return;draft.entries.push({name:v,sets:lastSets(v)||[{kg:'',reps:''}]});render()}
+function addPlan(i){const v=$('#p'+i).value.trim();if(!v)return;(S.routine[i]=S.routine[i]||[]).push(v);save();render()}
+function rmPlan(i,j){S.routine[i].splice(j,1);save();render()}
+function finish(){
+ const entries=draft.entries.map(e=>({name:e.name,sets:e.sets.map(s=>({kg:parseFloat(String(s.kg).replace(',','.'))||0,reps:parseInt(s.reps)||0})).filter(s=>s.kg>0||s.reps>0)})).filter(e=>e.sets.length);
+ if(!entries.length){alert('Anota al menos una serie con peso o repeticiones.');return}
+ S.logs=S.logs.filter(l=>l.date!==draft.date);S.logs.push({date:draft.date,entries});save();draft=null;go('home')}
+function go(t){tab=t;render()}
+function render(){
+ $('#app').innerHTML={home,train,plan}[tab]();
+ document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+ if(!document.activeElement||document.activeElement===document.body)$('#app').scrollTop=$('#app').scrollTop}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{if(b.dataset.t==='train')draft=null;go(b.dataset.t)});
+render();
+if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>
