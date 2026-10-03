@@ -61,6 +61,38 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .nav-main{color:var(--mu)}.nav-main.active{color:var(--ac)}
 
 @media (prefers-reduced-motion:no-preference){.nav-btn,.fab{transition:color .15s,box-shadow .15s}}
+
+/* ===== Paso 2: sesión activa ===== */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.mu{color:var(--mu)}
+.inp{width:100%;min-width:0;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:10px 4px;font:inherit;text-align:center}
+.inp.l{text-align:left;padding-left:12px}
+.btn{width:100%;background:var(--ac);color:#1a0a07;border-radius:12px;padding:13px 14px;font-weight:700}
+.btn.g{background:var(--line);color:var(--tx)}.btn.s{width:auto;padding:9px 12px}
+.x{color:var(--mu);padding:6px 8px;font-size:1.05rem}
+.sh{display:flex;align-items:center;gap:10px;margin:4px 0 14px}
+.ttl{flex:1;min-width:0;background:none;border:0;color:var(--tx);font:inherit;font-size:1.25rem;font-weight:700;padding:0}
+.clk{font-variant-numeric:tabular-nums;color:#4ad8a0;font-weight:700;font-size:1.1rem}
+.btn.fin{width:auto;padding:9px 14px;background:#4ad8a0;color:#06281c}
+.ex-h{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.ex-h h2{flex:1;margin:0;font-size:1.05rem}.ex-h .inp{width:56px;padding:7px 2px}
+.tr{display:grid;grid-template-columns:30px 78px 1fr 1fr 44px;gap:6px;align-items:center;margin-bottom:6px}
+.th{color:var(--mu);font-size:.7rem;text-align:center}
+.tr .nn{text-align:center;font-weight:700;color:var(--mu)}
+.ty{padding:10px 0;font-size:.72rem;font-weight:700;border-radius:10px}
+.ty.e{background:rgba(255,122,102,.15);color:var(--ac)}.ty.w{background:rgba(255,200,87,.15);color:#ffc857}
+.ck{background:var(--line);color:var(--mu);padding:10px 0;border-radius:10px;font-weight:700}
+.ck.on{background:#4ad8a0;color:#06281c}
+.rowb{display:flex;gap:8px;margin-top:8px}.rowb .btn:first-child{flex:1}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);text-align:center}
+.sum b{display:block;font-size:1.05rem}.sum span{color:var(--mu);font-size:.7rem}
+.addx{margin:6px 0 10px}
+.rbar{position:fixed;left:0;right:0;z-index:4;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px));
+  display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;
+  background:var(--surface);border-top:2px solid var(--line)}
+.rbar.go{border-top-color:var(--ac)}.rbar small{color:var(--mu);font-size:.72rem}
+.big{font-size:1.8rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.rbar .b{display:flex;gap:6px}
 </style>
 <title>GymTracker</title>
 </head>
@@ -85,11 +117,9 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
     <div class="slot" id="stats-records">Récords personales</div>
   </section>
 
-  <!-- 3. ENTRENAR (inicio rápido) -->
-  <section class="view" data-view="train" aria-labelledby="t-train" hidden>
-    <header class="vh"><h1 id="t-train">Entrenar</h1><p>Inicio rápido</p></header>
-    <div class="slot" id="train-start">Elegir rutina o sesión libre</div>
-    <div class="slot" id="train-session">Sesión activa (series, kg, reps, cronómetro)</div>
+  <!-- 3. ENTRENAR (sesión activa) -->
+  <section class="view" data-view="train" hidden>
+    <div id="train-root"></div>
   </section>
 
   <!-- 4. PROGRAMAS -->
@@ -176,6 +206,95 @@ show(location.hash.slice(1));
 
 if ('serviceWorker' in navigator)
   addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+
+/* ===== Paso 2: sesión de entrenamiento activa ===== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=s=>{s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return(h?h+':':'')+String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+const num=v=>parseFloat(String(v).replace(',','.'))||0;
+const dkey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+let S;try{S=JSON.parse(localStorage.getItem('gt'))}catch(e){}
+S=S||{};S.logs=S.logs||[];
+let ss=null;try{ss=JSON.parse(localStorage.getItem('gt_s'))}catch(e){}
+if(ss&&!Array.isArray(ss.entries))ss=null;
+if(ss)ss.entries.forEach(e=>e.sets.forEach(s=>{s.t=s.t||'E'}));
+const saveS=()=>{try{ss?localStorage.setItem('gt_s',JSON.stringify(ss)):localStorage.removeItem('gt_s')}catch(e){}};
+const saveLogs=()=>{try{localStorage.setItem('gt',JSON.stringify(S))}catch(e){}};
+let R={end:0,fin:false},AC=null,wl=null;
+
+function lastSets(n){for(const l of [...S.logs].sort((a,b)=>a.date<b.date?1:-1)){const e=l.entries.find(e=>e.name===n);if(e)return e.sets}return null}
+function numLabel(e,j){if(e.sets[j].t==='W')return'W';let n=0;for(let x=0;x<=j;x++)if(e.sets[x].t!=='W')n++;return n}
+function sumHTML(e){let vol=0,reps=0;
+ e.sets.forEach(s=>{if(s.done&&s.t!=='W'){const r=parseInt(s.reps)||0;vol+=num(s.kg)*r;reps+=r}});
+ const avg=reps?vol/reps:0,vt=vol>=1000?(vol/1000).toFixed(1)+' ton':Math.round(vol)+' kg';
+ return`<div><b>${vt}</b><span>Volumen total</span></div><div><b>${reps}</b><span>Reps totales</span></div><div><b>${avg?avg.toFixed(1):0} kg</b><span>Peso promedio</span></div>`}
+function exCard(e,i){
+ let h=`<div class="card ex"><div class="ex-h"><h2>${esc(e.name)}</h2><span class="mu" aria-hidden="true">⏱</span>
+ <input class="inp" inputmode="numeric" value="${e.rest}" aria-label="Descanso en segundos" oninput="ss.entries[${i}].rest=parseInt(this.value)||0;saveS()"><span class="mu">s</span>
+ <button class="x" onclick="rmEx(${i})" aria-label="Quitar ejercicio">✕</button></div>
+ <div class="tr"><span class="th">N°</span><span class="th">Tipo</span><span class="th">kg</span><span class="th">Reps</span><span class="th">✓</span></div>`;
+ e.sets.forEach((s,j)=>{const w=s.t==='W';
+  h+=`<div class="tr"><span class="nn">${numLabel(e,j)}</span>
+  <button class="ty ${w?'w':'e'}" onclick="tgl(${i},${j})">${w?'Calent.':'Efectiva'}</button>
+  <input class="inp" inputmode="decimal" placeholder="kg" value="${esc(s.kg)}" oninput="inp(${i},${j},'kg',this.value)">
+  <input class="inp" inputmode="numeric" placeholder="reps" value="${esc(s.reps)}" oninput="inp(${i},${j},'reps',this.value)">
+  <button class="ck ${s.done?'on':''}" onclick="tick(${i},${j},this)" aria-label="Serie completada">✓</button></div>`});
+ return h+`<div class="rowb"><button class="btn g" onclick="addS(${i})">+ Agregar serie</button><button class="btn g s" onclick="rmS(${i})" aria-label="Quitar última serie">−</button></div>
+ <div class="sum" id="sum-${i}">${sumHTML(e)}</div></div>`}
+
+function renderTrain(){
+ const root=$('#train-root'),v=$('#views'),sc=v.scrollTop;
+ const names=[...new Set(S.logs.flatMap(l=>l.entries.map(e=>e.name)))];
+ const dl=`<datalist id="exlist">${names.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>`;
+ if(!ss){root.innerHTML=`<header class="vh"><h1>Entrenar</h1><p>Inicio rápido</p></header>
+  <div class="card"><p class="mu" style="margin:0 0 12px;font-size:.9rem">Sesión libre: agrega los ejercicios sobre la marcha y registra cada serie.</p>
+  <button class="btn" onclick="startSess()">Iniciar entrenamiento</button></div>`;return}
+ let h=`<div class="sh"><input class="ttl" value="${esc(ss.title)}" maxlength="40" aria-label="Título del entrenamiento" oninput="ss.title=this.value;saveS()">
+  <span class="clk" id="g-time">00:00</span><button class="btn fin" onclick="finish()">Finalizar</button></div>`;
+ if(!ss.entries.length)h+=`<div class="card mu" style="text-align:center">Aún no hay ejercicios. Agrega el primero abajo.</div>`;
+ ss.entries.forEach((e,i)=>h+=exCard(e,i));
+ h+=`${dl}<div class="addx"><input class="inp l" id="nx" list="exlist" placeholder="Nombre del ejercicio (ej. Press de banca)" maxlength="40" onkeydown="if(event.key==='Enter')addEx()"></div>
+ <button class="btn" onclick="addEx()">+ Agregar ejercicio</button><div style="height:110px"></div>
+ <div class="rbar" id="rbar"><div onclick="startRest(90)"><small id="rl">Descanso automático</small><div class="big" id="rt">--:--</div></div>
+ <div class="b"><button class="btn g s" onclick="adj(-15)">−15</button><button class="btn g s" onclick="adj(15)">+15</button><button class="btn s" onclick="startRest(0)">Saltar</button></div></div>`;
+ root.innerHTML=h;v.scrollTop=sc;tickUI()}
+
+/* acciones */
+async function lock(){try{if(ss&&!document.hidden)wl=await navigator.wakeLock.request('screen')}catch(e){}}
+function startSess(){ss={title:'Entrenamiento',date:dkey(new Date()),start:Date.now(),entries:[]};saveS();renderTrain();lock()}
+function addEx(){const n=$('#nx').value.trim();if(!n)return;
+ const l=lastSets(n),sets=l&&l.length?l.map(s=>({t:'E',kg:s.kg,reps:s.reps,done:false})):[0,1,2].map(()=>({t:'E',kg:'',reps:'',done:false}));
+ ss.entries.push({name:n,rest:90,sets});saveS();renderTrain();
+ const c=document.querySelectorAll('.ex');c[c.length-1].scrollIntoView({block:'center'})}
+function rmEx(i){if(!confirm('¿Quitar este ejercicio?'))return;ss.entries.splice(i,1);saveS();renderTrain()}
+function addS(i){const s=ss.entries[i].sets,l=s[s.length-1];s.push({t:'E',kg:l?l.kg:'',reps:l?l.reps:'',done:false});saveS();renderTrain()}
+function rmS(i){ss.entries[i].sets.pop();saveS();renderTrain()}
+function tgl(i,j){const s=ss.entries[i].sets[j];s.t=s.t==='W'?'E':'W';saveS();renderTrain()}
+function inp(i,j,f,v){ss.entries[i].sets[j][f]=v;saveS();$('#sum-'+i).innerHTML=sumHTML(ss.entries[i])}
+function tick(i,j,b){const e=ss.entries[i],s=e.sets[j];s.done=!s.done;b.classList.toggle('on',s.done);
+ $('#sum-'+i).innerHTML=sumHTML(e);if(s.done&&e.rest>0)startRest(e.rest);saveS()}
+function finish(){
+ const ent=ss.entries.map(e=>({name:e.name,sets:e.sets.filter(s=>s.done&&s.t!=='W').map(s=>({kg:num(s.kg),reps:parseInt(s.reps)||0}))})).filter(e=>e.sets.length);
+ if(ent.length){if(!confirm('¿Finalizar y guardar el entrenamiento?'))return;
+  S.logs.push({date:ss.date,title:ss.title,dur:Math.round((Date.now()-ss.start)/1000),entries:ent});saveLogs()}
+ else if(!confirm('No completaste ninguna serie efectiva. ¿Descartar el entrenamiento?'))return;
+ ss=null;saveS();R={end:0,fin:false};try{wl&&wl.release()}catch(e){}renderTrain();show('home')}
+
+/* cronómetros: global y descanso automático */
+function unlock(){try{AC=AC||new(window.AudioContext||webkitAudioContext)();AC.resume()}catch(e){}}
+function beep(){try{const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);o.frequency.value=880;g.gain.value=.25;o.start();o.stop(AC.currentTime+.5)}catch(e){}
+ navigator.vibrate&&navigator.vibrate([250,100,250])}
+function startRest(sec){unlock();R={end:sec>0?Date.now()+sec*1000:0,fin:false};tickUI()}
+function adj(d){if(R.end)R.end=Math.max(Date.now()+1000,R.end+d*1000);tickUI()}
+function tickUI(){
+ if(!ss)return;const g=$('#g-time');if(g)g.textContent=fmt((Date.now()-ss.start)/1000);
+ const rt=$('#rt'),rl=$('#rl'),bar=$('#rbar');if(!rt)return;
+ if(R.end){const left=Math.ceil((R.end-Date.now())/1000);
+  if(left<=0){R={end:0,fin:true};beep()}else{rt.textContent=fmt(left);rl.textContent='Descansando';bar.classList.add('go');return}}
+ bar.classList.remove('go');rt.textContent=R.fin?'¡Listo!':'--:--';rl.textContent=R.fin?'A la siguiente serie':'Se inicia al completar una serie'}
+setInterval(tickUI,250);
+document.addEventListener('visibilitychange',lock);
+renderTrain();
 </script>
 </body>
 </html>
