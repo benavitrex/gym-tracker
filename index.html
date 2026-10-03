@@ -252,6 +252,59 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
   z-index:30;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;
   box-shadow:0 8px 24px rgba(0,0,0,.4);white-space:nowrap;max-width:90vw}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Feedback visual */
+@keyframes pulse-ok {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+@keyframes flash-ac {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ac) 50%, transparent); }
+  100% { box-shadow: 0 0 0 12px transparent; }
+}
+.ck.pulse { animation: pulse-ok .35s ease; }
+.card.flash { animation: flash-ac .5s ease; }
+.ty.d { background: rgba(107,140,255,.18); color: #6b8cff; }
+.ty.f { background: rgba(244,114,182,.18); color: #f472b6; }
+
+/* Mapa estilo MuscleWiki */
+.map-svg-box svg { max-width: 280px; }
+.map-mini .map-svg-box svg { max-width: 200px; }
+.m-region {
+  fill: #f5f5f7;
+  stroke: #1a1a1c;
+  stroke-width: 1.2;
+  transition: fill .35s ease;
+}
+.m-region.hot1 { fill: #ffc9c0; }
+.m-region.hot2 { fill: #ff9e8f; }
+.m-region.hot3 { fill: #ff7a66; }
+.m-region.hot4 { fill: #ff5538; }
+.m-region.hot5 { fill: #e63518; }
+.body-outline {
+  fill: #fafafa;
+  stroke: #1a1a1c;
+  stroke-width: 1.5;
+}
+.body-line {
+  fill: none;
+  stroke: #1a1a1c;
+  stroke-width: 1;
+}
+.map-wrap, .map-mini {
+  background: #f0f0f2;
+  border-color: var(--line);
+}
+.map-wrap strong, .map-mini strong { color: #1a1a1c; }
+.map-legend span { color: #444; }
+.map-tog { background: #e4e4e8; }
+.map-tog button { color: #555; }
+.map-tog button.on { background: #fff; color: #111; }
+
+/* Input placeholder more visible */
+.inp::placeholder { color: var(--mu); opacity: .7; }
+
 </style>
 <title>GymTracker</title>
 </head>
@@ -407,7 +460,7 @@ const saveS = () => { try { ss ? localStorage.setItem('gt_s', JSON.stringify(ss)
 const saveLogs = () => { try { localStorage.setItem('gt', JSON.stringify(S)); } catch (e) {} };
 
 let R = { end: 0, fin: false }, AC = null, wl = null;
-let mapSide = 'front', galCat = 'all', galQ = '', chartDays = 30;
+let mapSide = 'front', galCat = 'all', galEquip = 'all', galQ = '', chartDays = 30;
 
 /* ===== Temas ===== */
 const THEMES = {
@@ -464,51 +517,58 @@ const MGROUPS = [
   { k: 'abdomen', label: 'Abdomen', emoji: '🔥', color: '#f472b6' }
 ];
 const MG = Object.fromEntries(MGROUPS.map(m => [m.k, m]));
+const EQUIP = [
+  { k: 'barra', label: 'Barra' },
+  { k: 'mancuerna', label: 'Mancuerna' },
+  { k: 'maquina', label: 'Máquina' },
+  { k: 'polea', label: 'Polea' },
+  { k: 'peso_corporal', label: 'Peso corporal' }
+];
 
 const LIB = [
-  { name: 'Press de banca', cat: 'pecho', primary: ['pecho'], secondary: ['hombros', 'brazos'] },
-  { name: 'Press inclinado con barra', cat: 'pecho', primary: ['pecho'], secondary: ['hombros', 'brazos'] },
-  { name: 'Press declinado', cat: 'pecho', primary: ['pecho'], secondary: ['brazos'] },
-  { name: 'Aperturas con mancuernas', cat: 'pecho', primary: ['pecho'], secondary: [] },
-  { name: 'Fondos en paralelas', cat: 'pecho', primary: ['pecho', 'brazos'], secondary: ['hombros'] },
-  { name: 'Press con mancuernas', cat: 'pecho', primary: ['pecho'], secondary: ['hombros', 'brazos'] },
-  { name: 'Crossover en polea', cat: 'pecho', primary: ['pecho'], secondary: [] },
-  { name: 'Dominadas', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
-  { name: 'Jalón al pecho', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
-  { name: 'Remo con barra', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
-  { name: 'Remo con mancuerna', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
-  { name: 'Peso muerto', cat: 'espalda', primary: ['espalda', 'piernas'], secondary: [] },
-  { name: 'Remo en máquina', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
-  { name: 'Face pull', cat: 'espalda', primary: ['espalda', 'hombros'], secondary: [] },
-  { name: 'Hiperextensiones', cat: 'espalda', primary: ['espalda'], secondary: [] },
-  { name: 'Sentadilla', cat: 'piernas', primary: ['piernas'], secondary: [] },
-  { name: 'Prensa de piernas', cat: 'piernas', primary: ['piernas'], secondary: [] },
-  { name: 'Peso muerto rumano', cat: 'piernas', primary: ['piernas'], secondary: ['espalda'] },
-  { name: 'Zancadas', cat: 'piernas', primary: ['piernas'], secondary: [] },
-  { name: 'Extensiones de cuádriceps', cat: 'piernas', primary: ['piernas'], secondary: [] },
-  { name: 'Curl femoral', cat: 'piernas', primary: ['piernas'], secondary: [] },
-  { name: 'Elevación de gemelos', cat: 'piernas', primary: ['piernas'], secondary: [] },
-  { name: 'Hip thrust', cat: 'piernas', primary: ['piernas'], secondary: [] },
-  { name: 'Sentadilla búlgara', cat: 'piernas', primary: ['piernas'], secondary: [] },
-  { name: 'Curl de bíceps con barra', cat: 'brazos', primary: ['brazos'], secondary: [] },
-  { name: 'Curl con mancuernas', cat: 'brazos', primary: ['brazos'], secondary: [] },
-  { name: 'Curl martillo', cat: 'brazos', primary: ['brazos'], secondary: [] },
-  { name: 'Extensiones de tríceps', cat: 'brazos', primary: ['brazos'], secondary: [] },
-  { name: 'Press francés', cat: 'brazos', primary: ['brazos'], secondary: [] },
-  { name: 'Fondos de tríceps', cat: 'brazos', primary: ['brazos'], secondary: ['pecho'] },
-  { name: 'Curl en polea', cat: 'brazos', primary: ['brazos'], secondary: [] },
-  { name: 'Press militar', cat: 'hombros', primary: ['hombros'], secondary: ['brazos'] },
-  { name: 'Elevaciones laterales', cat: 'hombros', primary: ['hombros'], secondary: [] },
-  { name: 'Elevaciones frontales', cat: 'hombros', primary: ['hombros'], secondary: [] },
-  { name: 'Pájaros / rear delt', cat: 'hombros', primary: ['hombros'], secondary: ['espalda'] },
-  { name: 'Press Arnold', cat: 'hombros', primary: ['hombros'], secondary: ['brazos'] },
-  { name: 'Encogimientos de hombros', cat: 'hombros', primary: ['hombros', 'espalda'], secondary: [] },
-  { name: 'Crunch', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
-  { name: 'Plancha', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
-  { name: 'Elevación de piernas', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
-  { name: 'Russian twist', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
-  { name: 'Ab wheel', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
-  { name: 'Cable crunch', cat: 'abdomen', primary: ['abdomen'], secondary: [] }
+  { name: 'Press de banca', equip: 'barra', cat: 'pecho', primary: ['pecho'], secondary: ['hombros', 'brazos'] },
+  { name: 'Press inclinado con barra', equip: 'barra', cat: 'pecho', primary: ['pecho'], secondary: ['hombros', 'brazos'] },
+  { name: 'Press declinado', equip: 'barra', cat: 'pecho', primary: ['pecho'], secondary: ['brazos'] },
+  { name: 'Aperturas con mancuernas', equip: 'mancuerna', cat: 'pecho', primary: ['pecho'], secondary: [] },
+  { name: 'Fondos en paralelas', equip: 'peso_corporal', cat: 'pecho', primary: ['pecho', 'brazos'], secondary: ['hombros'] },
+  { name: 'Press con mancuernas', equip: 'mancuerna', cat: 'pecho', primary: ['pecho'], secondary: ['hombros', 'brazos'] },
+  { name: 'Crossover en polea', equip: 'polea', cat: 'pecho', primary: ['pecho'], secondary: [] },
+  { name: 'Dominadas', equip: 'peso_corporal', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
+  { name: 'Jalón al pecho', equip: 'maquina', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
+  { name: 'Remo con barra', equip: 'barra', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
+  { name: 'Remo con mancuerna', equip: 'mancuerna', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
+  { name: 'Peso muerto', equip: 'barra', cat: 'espalda', primary: ['espalda', 'piernas'], secondary: [] },
+  { name: 'Remo en máquina', equip: 'maquina', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
+  { name: 'Face pull', equip: 'polea', cat: 'espalda', primary: ['espalda', 'hombros'], secondary: [] },
+  { name: 'Hiperextensiones', equip: 'maquina', cat: 'espalda', primary: ['espalda'], secondary: [] },
+  { name: 'Sentadilla', equip: 'barra', cat: 'piernas', primary: ['piernas'], secondary: [] },
+  { name: 'Prensa de piernas', equip: 'maquina', cat: 'piernas', primary: ['piernas'], secondary: [] },
+  { name: 'Peso muerto rumano', equip: 'barra', cat: 'piernas', primary: ['piernas'], secondary: ['espalda'] },
+  { name: 'Zancadas', equip: 'mancuerna', cat: 'piernas', primary: ['piernas'], secondary: [] },
+  { name: 'Extensiones de cuádriceps', equip: 'maquina', cat: 'piernas', primary: ['piernas'], secondary: [] },
+  { name: 'Curl femoral', equip: 'maquina', cat: 'piernas', primary: ['piernas'], secondary: [] },
+  { name: 'Elevación de gemelos', equip: 'maquina', cat: 'piernas', primary: ['piernas'], secondary: [] },
+  { name: 'Hip thrust', equip: 'barra', cat: 'piernas', primary: ['piernas'], secondary: [] },
+  { name: 'Sentadilla búlgara', equip: 'mancuerna', cat: 'piernas', primary: ['piernas'], secondary: [] },
+  { name: 'Curl de bíceps con barra', equip: 'barra', cat: 'brazos', primary: ['brazos'], secondary: [] },
+  { name: 'Curl con mancuernas', equip: 'mancuerna', cat: 'brazos', primary: ['brazos'], secondary: [] },
+  { name: 'Curl martillo', equip: 'mancuerna', cat: 'brazos', primary: ['brazos'], secondary: [] },
+  { name: 'Extensiones de tríceps', equip: 'polea', cat: 'brazos', primary: ['brazos'], secondary: [] },
+  { name: 'Press francés', equip: 'barra', cat: 'brazos', primary: ['brazos'], secondary: [] },
+  { name: 'Fondos de tríceps', equip: 'peso_corporal', cat: 'brazos', primary: ['brazos'], secondary: ['pecho'] },
+  { name: 'Curl en polea', equip: 'polea', cat: 'brazos', primary: ['brazos'], secondary: [] },
+  { name: 'Press militar', equip: 'barra', cat: 'hombros', primary: ['hombros'], secondary: ['brazos'] },
+  { name: 'Elevaciones laterales', equip: 'mancuerna', cat: 'hombros', primary: ['hombros'], secondary: [] },
+  { name: 'Elevaciones frontales', equip: 'mancuerna', cat: 'hombros', primary: ['hombros'], secondary: [] },
+  { name: 'Pájaros / rear delt', equip: 'mancuerna', cat: 'hombros', primary: ['hombros'], secondary: ['espalda'] },
+  { name: 'Press Arnold', equip: 'mancuerna', cat: 'hombros', primary: ['hombros'], secondary: ['brazos'] },
+  { name: 'Encogimientos de hombros', equip: 'mancuerna', cat: 'hombros', primary: ['hombros', 'espalda'], secondary: [] },
+  { name: 'Crunch', equip: 'peso_corporal', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
+  { name: 'Plancha', equip: 'peso_corporal', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
+  { name: 'Elevación de piernas', equip: 'peso_corporal', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
+  { name: 'Russian twist', equip: 'peso_corporal', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
+  { name: 'Ab wheel', equip: 'peso_corporal', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
+  { name: 'Cable crunch', equip: 'polea', cat: 'abdomen', primary: ['abdomen'], secondary: [] }
 ];
 
 function allExercises() { return [...LIB, ...S.customEx]; }
@@ -830,6 +890,7 @@ function renderGallery() {
   if (!root) return;
   const list = allExercises().filter(e => {
     if (galCat !== 'all' && e.cat !== galCat) return false;
+    if (galEquip !== 'all' && e.equip !== galEquip) return false;
     if (galQ && !e.name.toLowerCase().includes(galQ)) return false;
     return true;
   }).sort((a, b) => a.name.localeCompare(b.name, 'es'));
@@ -854,6 +915,10 @@ function renderGallery() {
     <div class="cat-row">
       <button class="cat-btn ${galCat === 'all' ? 'on' : ''}" onclick="galCat='all';renderGallery()">Todos</button>
       ${MGROUPS.map(m => `<button class="cat-btn ${galCat === m.k ? 'on' : ''}" onclick="galCat='${m.k}';renderGallery()">${m.emoji} ${m.label}</button>`).join('')}
+    </div>
+    <div class="cat-row">
+      <button class="cat-btn ${galEquip === 'all' ? 'on' : ''}" onclick="galEquip='all';renderGallery()">Cualquier equipo</button>
+      ${EQUIP.map(eq => `<button class="cat-btn ${galEquip === eq.k ? 'on' : ''}" onclick="galEquip='${eq.k}';renderGallery()">${eq.label}</button>`).join('')}
     </div>
     <button class="btn g" style="margin-bottom:12px" onclick="openCustomModal()">+ Agregar ejercicio personalizado</button>
     ${list.length ? list.map(e => exItemHTML(e)).join('') : '<div class="card mu" style="text-align:center">No se encontraron ejercicios</div>'}
@@ -942,48 +1007,77 @@ function muscleSVG(side, heat = {}) {
     if (h >= 5) return 'hot5'; if (h >= 4) return 'hot4'; if (h >= 3) return 'hot3';
     if (h >= 2) return 'hot2'; if (h >= 1) return 'hot1'; return '';
   };
+  // Estilo MuscleWiki: silueta clara con contornos y relleno al trabajar
   if (side === 'front') {
-    return `<svg viewBox="0 0 200 360" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="100" cy="28" rx="22" ry="26" class="body-outline" fill="#1e1e22"/>
-      <rect x="90" y="50" width="20" height="16" rx="4" fill="#1e1e22" stroke="#3a3a40"/>
-      <path d="M70 66 Q60 70 55 100 L50 160 Q48 190 55 210 L70 250 L80 250 L100 230 L120 250 L130 250 L145 210 Q152 190 150 160 L145 100 Q140 70 130 66 Z" class="body-outline" fill="#1e1e22"/>
-      <path d="M72 78 Q100 70 128 78 L130 115 Q100 130 70 115 Z" class="m-region ${cls('pecho')}"/>
-      <ellipse cx="58" cy="78" rx="16" ry="14" class="m-region ${cls('hombros')}"/>
-      <ellipse cx="142" cy="78" rx="16" ry="14" class="m-region ${cls('hombros')}"/>
-      <path d="M78 130 Q100 125 122 130 L120 195 Q100 205 80 195 Z" class="m-region ${cls('abdomen')}"/>
-      <path d="M42 90 Q30 110 32 150 L48 152 Q50 120 55 95 Z" class="m-region ${cls('brazos')}"/>
-      <path d="M158 90 Q170 110 168 150 L152 152 Q150 120 145 95 Z" class="m-region ${cls('brazos')}"/>
-      <path d="M32 152 L28 200 L44 202 L48 154 Z" fill="#1e1e22" stroke="#3a3a40"/>
-      <path d="M168 152 L172 200 L156 202 L152 154 Z" fill="#1e1e22" stroke="#3a3a40"/>
-      <path d="M72 252 Q70 290 68 330 L90 332 Q92 290 95 255 Z" class="m-region ${cls('piernas')}"/>
-      <path d="M128 252 Q130 290 132 330 L110 332 Q108 290 105 255 Z" class="m-region ${cls('piernas')}"/>
-      <ellipse cx="30" cy="208" rx="10" ry="6" fill="#1e1e22" stroke="#3a3a40"/>
-      <ellipse cx="170" cy="208" rx="10" ry="6" fill="#1e1e22" stroke="#3a3a40"/>
-      <ellipse cx="72" cy="340" rx="14" ry="8" fill="#1e1e22" stroke="#3a3a40"/>
-      <ellipse cx="128" cy="340" rx="14" ry="8" fill="#1e1e22" stroke="#3a3a40"/>
+    return `<svg viewBox="0 0 240 480" xmlns="http://www.w3.org/2000/svg">
+      <!-- Cabeza -->
+      <ellipse cx="120" cy="36" rx="28" ry="32" class="body-outline"/>
+      <!-- Cuello -->
+      <path d="M105 62 L105 78 L135 78 L135 62" class="body-outline"/>
+      <!-- Torso base -->
+      <path d="M88 78 L70 95 L58 140 L55 200 L62 250 L78 310 L95 330 L120 315 L145 330 L162 310 L178 250 L185 200 L182 140 L170 95 L152 78 Z" class="body-outline"/>
+      <!-- Pecho izq / der -->
+      <path d="M90 88 L118 82 L118 130 Q105 142 90 132 Z" class="m-region ${cls('pecho')}"/>
+      <path d="M122 82 L150 88 L150 132 Q135 142 122 130 Z" class="m-region ${cls('pecho')}"/>
+      <!-- Línea media pecho -->
+      <path d="M120 82 L120 145" class="body-line"/>
+      <!-- Hombros -->
+      <path d="M70 90 Q52 85 48 105 Q50 120 68 118 Q78 110 78 95 Z" class="m-region ${cls('hombros')}"/>
+      <path d="M170 90 Q188 85 192 105 Q190 120 172 118 Q162 110 162 95 Z" class="m-region ${cls('hombros')}"/>
+      <!-- Abdomen (6 pack stylized) -->
+      <path d="M95 148 L145 148 L142 200 L120 210 L98 200 Z" class="m-region ${cls('abdomen')}"/>
+      <path d="M100 152 L140 152 M100 168 L140 168 M100 184 L140 184 M120 148 L120 200" class="body-line"/>
+      <!-- Brazos (bíceps) -->
+      <path d="M48 118 L38 160 L42 200 L58 202 L62 160 L68 120 Z" class="m-region ${cls('brazos')}"/>
+      <path d="M192 118 L202 160 L198 200 L182 202 L178 160 L172 120 Z" class="m-region ${cls('brazos')}"/>
+      <!-- Antebrazos -->
+      <path d="M42 202 L36 250 L52 255 L58 205 Z" class="body-outline"/>
+      <path d="M198 202 L204 250 L188 255 L182 205 Z" class="body-outline"/>
+      <!-- Manos -->
+      <ellipse cx="40" cy="262" rx="12" ry="10" class="body-outline"/>
+      <ellipse cx="200" cy="262" rx="12" ry="10" class="body-outline"/>
+      <!-- Piernas (cuádriceps) -->
+      <path d="M82 330 L72 400 L70 450 L95 455 L102 400 L108 335 Z" class="m-region ${cls('piernas')}"/>
+      <path d="M158 330 L168 400 L170 450 L145 455 L138 400 L132 335 Z" class="m-region ${cls('piernas')}"/>
+      <!-- Líneas cuádriceps -->
+      <path d="M88 350 L88 420 M95 345 L92 430 M152 350 L152 420 M145 345 L148 430" class="body-line"/>
+      <!-- Pies -->
+      <ellipse cx="80" cy="462" rx="18" ry="10" class="body-outline"/>
+      <ellipse cx="160" cy="462" rx="18" ry="10" class="body-outline"/>
     </svg>`;
   }
-  return `<svg viewBox="0 0 200 360" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="100" cy="28" rx="22" ry="26" class="body-outline" fill="#1e1e22"/>
-    <rect x="90" y="50" width="20" height="16" rx="4" fill="#1e1e22" stroke="#3a3a40"/>
-    <path d="M70 66 Q60 70 55 100 L50 160 Q48 190 55 210 L70 250 L80 250 L100 230 L120 250 L130 250 L145 210 Q152 190 150 160 L145 100 Q140 70 130 66 Z" class="body-outline" fill="#1e1e22"/>
-    <path d="M70 70 Q100 60 130 70 L128 100 Q100 110 72 100 Z" class="m-region ${cls('espalda')}"/>
-    <path d="M68 100 Q55 140 58 185 L78 190 Q80 140 85 110 Z" class="m-region ${cls('espalda')}"/>
-    <path d="M132 100 Q145 140 142 185 L122 190 Q120 140 115 110 Z" class="m-region ${cls('espalda')}"/>
-    <path d="M82 160 Q100 155 118 160 L115 200 Q100 210 85 200 Z" class="m-region ${cls('espalda')}"/>
-    <ellipse cx="58" cy="78" rx="16" ry="14" class="m-region ${cls('hombros')}"/>
-    <ellipse cx="142" cy="78" rx="16" ry="14" class="m-region ${cls('hombros')}"/>
-    <path d="M42 90 Q30 110 32 150 L48 152 Q50 120 55 95 Z" class="m-region ${cls('brazos')}"/>
-    <path d="M158 90 Q170 110 168 150 L152 152 Q150 120 145 95 Z" class="m-region ${cls('brazos')}"/>
-    <path d="M32 152 L28 200 L44 202 L48 154 Z" fill="#1e1e22" stroke="#3a3a40"/>
-    <path d="M168 152 L172 200 L156 202 L152 154 Z" fill="#1e1e22" stroke="#3a3a40"/>
-    <path d="M72 248 Q70 280 68 320 L95 322 Q98 280 100 252 Q102 280 105 322 L132 320 Q130 280 128 248 Q100 260 72 248 Z" class="m-region ${cls('piernas')}"/>
-    <ellipse cx="30" cy="208" rx="10" ry="6" fill="#1e1e22" stroke="#3a3a40"/>
-    <ellipse cx="170" cy="208" rx="10" ry="6" fill="#1e1e22" stroke="#3a3a40"/>
-    <ellipse cx="75" cy="335" rx="14" ry="8" fill="#1e1e22" stroke="#3a3a40"/>
-    <ellipse cx="125" cy="335" rx="14" ry="8" fill="#1e1e22" stroke="#3a3a40"/>
+  // BACK
+  return `<svg viewBox="0 0 240 480" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="120" cy="36" rx="28" ry="32" class="body-outline"/>
+    <path d="M105 62 L105 78 L135 78 L135 62" class="body-outline"/>
+    <path d="M88 78 L70 95 L58 140 L55 200 L62 250 L78 310 L95 330 L120 315 L145 330 L162 310 L178 250 L185 200 L182 140 L170 95 L152 78 Z" class="body-outline"/>
+    <!-- Trapecio / espalda alta -->
+    <path d="M90 82 L120 75 L150 82 L148 115 Q120 128 92 115 Z" class="m-region ${cls('espalda')}"/>
+    <!-- Dorsales -->
+    <path d="M88 118 L60 160 L62 220 L90 230 Q95 170 100 130 Z" class="m-region ${cls('espalda')}"/>
+    <path d="M152 118 L180 160 L178 220 L150 230 Q145 170 140 130 Z" class="m-region ${cls('espalda')}"/>
+    <!-- Lumbar -->
+    <path d="M95 220 L145 220 L142 280 L120 290 L98 280 Z" class="m-region ${cls('espalda')}"/>
+    <path d="M120 75 L120 280" class="body-line"/>
+    <!-- Hombros rear -->
+    <path d="M70 90 Q52 85 48 105 Q50 120 68 118 Q78 110 78 95 Z" class="m-region ${cls('hombros')}"/>
+    <path d="M170 90 Q188 85 192 105 Q190 120 172 118 Q162 110 162 95 Z" class="m-region ${cls('hombros')}"/>
+    <!-- Tríceps -->
+    <path d="M48 118 L38 160 L42 200 L58 202 L62 160 L68 120 Z" class="m-region ${cls('brazos')}"/>
+    <path d="M192 118 L202 160 L198 200 L182 202 L178 160 L172 120 Z" class="m-region ${cls('brazos')}"/>
+    <path d="M42 202 L36 250 L52 255 L58 205 Z" class="body-outline"/>
+    <path d="M198 202 L204 250 L188 255 L182 205 Z" class="body-outline"/>
+    <ellipse cx="40" cy="262" rx="12" ry="10" class="body-outline"/>
+    <ellipse cx="200" cy="262" rx="12" ry="10" class="body-outline"/>
+    <!-- Glúteos + isquios -->
+    <path d="M85 320 Q120 305 155 320 L160 360 Q120 380 80 360 Z" class="m-region ${cls('piernas')}"/>
+    <path d="M82 360 L72 420 L70 450 L95 455 L105 400 L108 365 Z" class="m-region ${cls('piernas')}"/>
+    <path d="M158 360 L168 420 L170 450 L145 455 L135 400 L132 365 Z" class="m-region ${cls('piernas')}"/>
+    <ellipse cx="80" cy="462" rx="18" ry="10" class="body-outline"/>
+    <ellipse cx="160" cy="462" rx="18" ry="10" class="body-outline"/>
   </svg>`;
 }
+
 function getSessionHeat() {
   const heat = {};
   if (!ss) return heat;
@@ -1318,10 +1412,9 @@ function exCard(e, i) {
  <button class="x" onclick="rmEx(${i})">✕</button></div>
  <div class="tr"><span class="th">N°</span><span class="th">Tipo</span><span class="th">${unitLabel()}</span><span class="th">Reps</span><span class="th">✓</span></div>`;
   e.sets.forEach((s, j) => {
-    const w = s.t === 'W';
     const disp = s.kg !== '' && s.kg != null ? toDisplay(num(s.kg)) : '';
     h += `<div class="tr"><span class="nn">${numLabel(e, j)}</span>
-  <button class="ty ${w ? 'w' : 'e'}" onclick="tgl(${i},${j})">${w ? 'Calent.' : 'Efectiva'}</button>
+  <button class="ty ${s.t==='W'?'w':s.t==='D'?'d':s.t==='F'?'f':'e'}" onclick="tgl(${i},${j})">${s.t==='W'?'Calent.':s.t==='D'?'Drop':s.t==='F'?'Fallo':'Efectiva'}</button>
   <input class="inp" inputmode="decimal" placeholder="${unitLabel()}" value="${disp}"
     oninput="inp(${i},${j},'kg',fromDisplay(this.value))">
   <input class="inp" inputmode="numeric" placeholder="reps" value="${esc(s.reps)}" oninput="inp(${i},${j},'reps',this.value)">
@@ -1358,7 +1451,7 @@ function renderTrain() {
   h += `${dl}<div class="addx"><input class="inp l" id="nx" list="exlist" placeholder="Nombre del ejercicio" maxlength="40" onkeydown="if(event.key==='Enter')addEx()"></div>
  <button class="btn" onclick="addEx()">+ Agregar ejercicio</button><div style="height:110px"></div>
  <div class="rbar" id="rbar"><div onclick="startRest(90)"><small id="rl">Descanso automático</small><div class="big" id="rt">--:--</div></div>
- <div class="b"><button class="btn g s" onclick="adj(-15)">−15</button><button class="btn g s" onclick="adj(15)">+15</button><button class="btn s" onclick="startRest(0)">Saltar</button></div></div>`;
+ <div class="b"><button class="btn g s" onclick="adj(-30)">−30</button><button class="btn g s" onclick="adj(30)">+30</button><button class="btn s" onclick="startRest(0)">Saltar</button></div></div>`;
   root.innerHTML = h;
   v.scrollTop = sc;
   tickUI();
@@ -1400,7 +1493,15 @@ function addS(i) {
   saveS(); renderTrain();
 }
 function rmS(i) { ss.entries[i].sets.pop(); saveS(); renderTrain(); }
-function tgl(i, j) { const s = ss.entries[i].sets[j]; s.t = s.t === 'W' ? 'E' : 'W'; saveS(); renderTrain(); }
+function tgl(i, j) {
+  const s = ss.entries[i].sets[j];
+  const order = ['E', 'W', 'D', 'F'];
+  const idx = order.indexOf(s.t || 'E');
+  s.t = order[(idx + 1) % order.length];
+  saveS();
+  renderTrain();
+  if (navigator.vibrate) navigator.vibrate(15);
+}
 function inp(i, j, f, v) {
   ss.entries[i].sets[j][f] = f === 'kg' ? v : v;
   saveS();
@@ -1410,6 +1511,14 @@ function tick(i, j, b) {
   const e = ss.entries[i], s = e.sets[j];
   s.done = !s.done;
   b.classList.toggle('on', s.done);
+  if (s.done) {
+    b.classList.remove('pulse');
+    void b.offsetWidth;
+    b.classList.add('pulse');
+    if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
+    const card = b.closest('.ex');
+    if (card) { card.classList.remove('flash'); void card.offsetWidth; card.classList.add('flash'); }
+  }
   $('#sum-' + i).innerHTML = sumHTML(e);
   if (s.done && e.rest > 0) startRest(e.rest);
   saveS();
@@ -1417,13 +1526,50 @@ function tick(i, j, b) {
 }
 function finish() {
   const ent = ss.entries
-    .map(e => ({ name: e.name, sets: e.sets.filter(s => s.done && s.t !== 'W').map(s => ({ kg: num(s.kg), reps: parseInt(s.reps) || 0 })) }))
+    .map(e => ({
+      name: e.name,
+      rest: e.rest || 90,
+      allSets: e.sets.filter(s => s.done).map(s => ({ t: s.t || 'E', kg: num(s.kg), reps: parseInt(s.reps) || 0 })),
+      sets: e.sets.filter(s => s.done && s.t !== 'W').map(s => ({ kg: num(s.kg), reps: parseInt(s.reps) || 0 }))
+    }))
     .filter(e => e.sets.length);
   if (ent.length) {
     if (!confirm('¿Finalizar y guardar el entrenamiento?')) return;
-    S.logs.push({ date: ss.date, title: ss.title, dur: Math.round((Date.now() - ss.start) / 1000), entries: ent });
+    S.logs.push({
+      date: ss.date,
+      title: ss.title,
+      dur: Math.round((Date.now() - ss.start) / 1000),
+      entries: ent.map(e => ({ name: e.name, sets: e.sets }))
+    });
     saveLogs();
     toast('Entrenamiento guardado');
+    // Preguntar si actualizar rutina del calendario
+    const key = getTodayKey();
+    const day = S.plan[key];
+    if (day && day.exercises && day.exercises.length) {
+      if (confirm('¿Actualizar la rutina base del calendario con los pesos y reps de hoy?')) {
+        const byName = {};
+        ent.forEach(e => {
+          byName[e.name] = {
+            name: e.name,
+            rest: e.rest,
+            sets: (e.allSets.length ? e.allSets : e.sets).map(s => ({
+              kg: String(s.kg || ''),
+              reps: String(s.reps || '')
+            }))
+          };
+        });
+        day.exercises = day.exercises.map(ex => byName[ex.name] || ex);
+        // agregar ejercicios nuevos de la sesión que no estaban en el plan
+        ent.forEach(e => {
+          if (!day.exercises.some(x => x.name === e.name)) {
+            day.exercises.push(byName[e.name]);
+          }
+        });
+        saveLogs();
+        toast('Rutina del calendario actualizada');
+      }
+    }
   } else if (!confirm('No completaste ninguna serie efectiva. ¿Descartar el entrenamiento?')) return;
   ss = null; saveS(); R = { end: 0, fin: false };
   try { wl && wl.release(); } catch (e) {}
