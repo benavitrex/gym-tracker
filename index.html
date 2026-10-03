@@ -305,6 +305,36 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 /* Input placeholder more visible */
 .inp::placeholder { color: var(--mu); opacity: .7; }
 
+
+/* GitHub-style heatmap */
+.heat-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+.heat-grid{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);grid-auto-columns:11px;gap:3px;width:max-content;margin:0 auto}
+.heat-cell{width:11px;height:11px;border-radius:2px;background:var(--line)}
+.heat-cell.l1{background:color-mix(in srgb,var(--ac) 25%,var(--line))}
+.heat-cell.l2{background:color-mix(in srgb,var(--ac) 45%,var(--line))}
+.heat-cell.l3{background:color-mix(in srgb,var(--ac) 70%,transparent)}
+.heat-cell.l4{background:var(--ac)}
+.heat-legend{display:flex;align-items:center;justify-content:flex-end;gap:4px;margin-top:8px;font-size:.7rem;color:var(--mu)}
+.heat-legend i{width:11px;height:11px;border-radius:2px;display:inline-block}
+
+/* Calendario mensual */
+.cal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-hd strong{font-size:.95rem}
+.cal-nav{display:flex;gap:6px}
+.cal-nav button{width:36px;height:36px;border-radius:10px;background:var(--bg);border:1px solid var(--line);font-size:1.1rem;color:var(--tx)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.cal-dow{font-size:.65rem;color:var(--mu);font-weight:600;padding:4px 0}
+.cal-day{aspect-ratio:1;border-radius:10px;display:grid;place-items:center;font-size:.8rem;font-weight:600;color:var(--mu);background:transparent;border:1px solid transparent;cursor:default}
+.cal-day.in{color:var(--tx);cursor:pointer;background:var(--bg);border-color:var(--line)}
+.cal-day.trained{background:color-mix(in srgb,var(--ac) 22%,var(--bg));border-color:var(--ac);color:var(--ac)}
+.cal-day.today{box-shadow:0 0 0 2px color-mix(in srgb,var(--ac) 40%,transparent)}
+.cal-day.empty{visibility:hidden}
+
+/* Músculo clickeable */
+.m-region{cursor:pointer}
+.m-region:hover{filter:brightness(1.08)}
+.m-region.sel{stroke:var(--ac)!important;stroke-width:2.5!important}
+
 </style>
 <title>GymTracker</title>
 </head>
@@ -412,6 +442,18 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
   </div>
 </div>
 
+
+<!-- Modal log del día -->
+<div class="modal-bg" id="log-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true">
+    <h2 id="log-modal-title">Entrenamiento</h2>
+    <div id="log-modal-body"></div>
+    <div class="actions" style="margin-top:16px">
+      <button class="btn" onclick="closeLogModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal objetivo -->
 <div class="modal-bg" id="goal-modal" hidden>
   <div class="modal" role="dialog" aria-modal="true">
@@ -461,6 +503,8 @@ const saveLogs = () => { try { localStorage.setItem('gt', JSON.stringify(S)); } 
 
 let R = { end: 0, fin: false }, AC = null, wl = null;
 let mapSide = 'front', galCat = 'all', galEquip = 'all', galQ = '', chartDays = 30;
+let calYear = new Date().getFullYear(), calMonth = new Date().getMonth(); // 0-11
+let selectedMuscle = null;
 
 /* ===== Temas ===== */
 const THEMES = {
@@ -668,108 +712,158 @@ function renderHome() {
   const hasPlan = day && day.exercises && day.exercises.length > 0;
   const todayStr = dkey(new Date());
   const trainedToday = S.logs.some(l => l.date === todayStr);
-  const { vol, reps, sets, secs } = computeStats();
+  const { secs } = computeStats();
   const hours = (secs / 3600).toFixed(1);
 
-  // Streak: consecutive days with at least 1 log ending today or yesterday
+  // Volume per day for heatmap intensity
+  const volByDate = {};
+  const logsByDate = {};
+  S.logs.forEach(l => {
+    let v = 0;
+    (l.entries || []).forEach(e => (e.sets || []).forEach(s => { v += num(s.kg) * (parseInt(s.reps) || 0); }));
+    volByDate[l.date] = (volByDate[l.date] || 0) + v;
+    if (!logsByDate[l.date]) logsByDate[l.date] = [];
+    logsByDate[l.date].push(l);
+  });
+  const maxVol = Math.max(1, ...Object.values(volByDate), 1);
+
+  // Streak
   let streak = 0;
-  const dates = new Set(S.logs.map(l => l.date));
+  const dates = new Set(Object.keys(volByDate));
   const cursor = new Date();
-  // if not trained today, start from yesterday
   if (!dates.has(dkey(cursor))) cursor.setDate(cursor.getDate() - 1);
-  while (dates.has(dkey(cursor))) {
-    streak++;
-    cursor.setDate(cursor.getDate() - 1);
+  while (dates.has(dkey(cursor))) { streak++; cursor.setDate(cursor.getDate() - 1); }
+
+  // GitHub-style heatmap: last 53 weeks ending today
+  const heatCells = [];
+  const endD = new Date();
+  endD.setHours(12,0,0,0);
+  // align to end of week (Saturday in grid? GitHub uses Sun start row)
+  // Grid: rows = Sun..Sat, columns = weeks
+  const startD = new Date(endD);
+  startD.setDate(startD.getDate() - 52 * 7 - endD.getDay());
+  for (let d = new Date(startD); d <= endD; d.setDate(d.getDate() + 1)) {
+    const key = dkey(d);
+    const v = volByDate[key] || 0;
+    let lvl = 0;
+    if (v > 0) {
+      const r = v / maxVol;
+      lvl = r > 0.75 ? 4 : r > 0.5 ? 3 : r > 0.25 ? 2 : 1;
+    }
+    heatCells.push({ key, lvl, title: key + (v ? ` · ${Math.round(v)} kg vol` : '') });
   }
 
-  // Week attendance (Mon-Sun of current week)
-  const now = new Date();
-  const dow = now.getDay(); // 0=Sun
-  const mondayOffset = dow === 0 ? -6 : 1 - dow;
-  const weekDots = DAYS.map((d, i) => {
-    const dt = new Date(now);
-    dt.setDate(now.getDate() + mondayOffset + i);
+  // Monthly calendar
+  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const first = new Date(calYear, calMonth, 1);
+  const startPad = first.getDay(); // 0=Sun
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  let calCells = '';
+  for (let i = 0; i < startPad; i++) calCells += `<div class="cal-day empty"></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dt = new Date(calYear, calMonth, d);
     const key = dkey(dt);
-    const done = dates.has(key);
+    const trained = !!volByDate[key];
     const isToday = key === todayStr;
-    return { short: d.short, done, isToday };
-  });
+    const cls = `cal-day in${trained ? ' trained' : ''}${isToday ? ' today' : ''}`;
+    const click = trained ? `onclick="showDayLog('${key}')"` : '';
+    calCells += `<button class="${cls}" ${click} aria-label="${key}">${d}</button>`;
+  }
 
-  // Recent logs
-  const recent = [...S.logs].sort((a, b) => a.date < b.date ? 1 : -1).slice(0, 5);
-
+  // Today card
   let todayHTML;
   if (ss) {
-    todayHTML = `<div class="home-card">
-      <h3>Sesión en curso</h3>
+    todayHTML = `<div class="home-card"><h3>Sesión en curso</h3>
       <p style="margin:0 0 10px;font-size:.9rem"><strong>${esc(ss.title)}</strong> · ${ss.entries.length} ejercicio${ss.entries.length !== 1 ? 's' : ''}</p>
-      <button class="btn" onclick="show('train')">Continuar entrenamiento</button>
-    </div>`;
+      <button class="btn" onclick="show('train')">Continuar entrenamiento</button></div>`;
   } else if (trainedToday) {
-    todayHTML = `<div class="home-card">
-      <h3>Hoy · ${dayName}</h3>
+    todayHTML = `<div class="home-card"><h3>Hoy · ${dayName}</h3>
       <p class="mu" style="margin:0 0 10px;font-size:.9rem">✓ Ya entrenaste hoy. ¡Buen trabajo!</p>
       <button class="btn g" onclick="openStartModal()">Entrenar de nuevo</button>
-    </div>`;
+      <button class="btn g" style="margin-top:8px" onclick="showDayLog('${todayStr}')">Ver resumen de hoy</button></div>`;
   } else if (hasPlan) {
-    todayHTML = `<div class="home-card">
-      <h3>Hoy · ${esc(day.title || dayName)}</h3>
+    todayHTML = `<div class="home-card"><h3>Hoy · ${esc(day.title || dayName)}</h3>
       ${day.exercises.map(e => {
         const n = (e.sets || []).length;
         return `<div class="home-today-ex"><span class="dot"></span><span>${esc(e.name)}</span><small>${n} serie${n !== 1 ? 's' : ''}</small></div>`;
       }).join('')}
-      <button class="btn" style="margin-top:12px" onclick="openStartModal()">Empezar entrenamiento</button>
-    </div>`;
+      <button class="btn" style="margin-top:12px" onclick="openStartModal()">Empezar entrenamiento</button></div>`;
   } else {
-    todayHTML = `<div class="home-card">
-      <h3>Hoy · ${dayName}</h3>
-      <p class="mu" style="margin:0 0 10px;font-size:.9rem">No hay rutina programada. Configúrala en Programas o empieza una sesión libre.</p>
+    todayHTML = `<div class="home-card"><h3>Hoy · ${dayName}</h3>
+      <p class="mu" style="margin:0 0 10px;font-size:.9rem">No hay rutina programada.</p>
       <button class="btn" onclick="openStartModal()">Sesión libre</button>
-      <button class="btn g" style="margin-top:8px" onclick="show('programs')">Ir a Programas</button>
-    </div>`;
+      <button class="btn g" style="margin-top:8px" onclick="show('programs')">Ir a Programas</button></div>`;
   }
 
   root.innerHTML = `
     ${todayHTML}
 
     <div class="home-card">
-      <h3>Racha</h3>
-      <div class="streak">
-        <div class="num">${streak}</div>
-        <div class="txt">${streak === 1 ? 'día seguido' : 'días seguidos'}<br>entrenando</div>
+      <h3>Racha · ${streak} día${streak !== 1 ? 's' : ''}</h3>
+      <div class="streak"><div class="num">${streak}</div>
+        <div class="txt">${S.logs.length} sesiones · ${hours} h totales</div></div>
+    </div>
+
+    <div class="home-card">
+      <h3>Actividad del año</h3>
+      <div class="heat-wrap"><div class="heat-grid">
+        ${heatCells.map(c => `<div class="heat-cell${c.lvl ? ' l' + c.lvl : ''}" title="${esc(c.title)}"></div>`).join('')}
+      </div></div>
+      <div class="heat-legend">
+        <span>Menos</span>
+        <i style="background:var(--line)"></i>
+        <i class="l1" style="background:color-mix(in srgb,var(--ac) 25%,var(--line))"></i>
+        <i style="background:color-mix(in srgb,var(--ac) 45%,var(--line))"></i>
+        <i style="background:color-mix(in srgb,var(--ac) 70%,transparent)"></i>
+        <i style="background:var(--ac)"></i>
+        <span>Más</span>
       </div>
     </div>
 
     <div class="home-card">
-      <h3>Esta semana</h3>
-      <div class="week-dots">
-        ${weekDots.map(w => `
-          <div class="week-dot${w.done ? ' done' : ''}${w.isToday ? ' today' : ''}">
-            <div class="circle">${w.done ? '✓' : w.short.charAt(0)}</div>
-            <div class="lbl">${w.short}</div>
-          </div>
-        `).join('')}
+      <div class="cal-hd">
+        <strong>${monthNames[calMonth]} ${calYear}</strong>
+        <div class="cal-nav">
+          <button type="button" onclick="shiftCal(-1)" aria-label="Mes anterior">‹</button>
+          <button type="button" onclick="shiftCal(1)" aria-label="Mes siguiente">›</button>
+        </div>
       </div>
-    </div>
-
-    <div class="home-card">
-      <h3>Resumen rápido</h3>
-      <div class="kpi-grid" style="margin-bottom:0">
-        <div class="kpi" style="padding:10px"><b style="font-size:1.1rem">${S.logs.length}</b><span>Sesiones</span></div>
-        <div class="kpi" style="padding:10px"><b style="font-size:1.1rem">${hours} h</b><span>Tiempo total</span></div>
+      <div class="cal-grid">
+        ${['D','L','M','X','J','V','S'].map(x => `<div class="cal-dow">${x}</div>`).join('')}
+        ${calCells}
       </div>
+      <p class="hint" style="margin:10px 0 0">Toca un día marcado para ver el entrenamiento.</p>
     </div>
-
-    ${recent.length ? `<div class="home-card">
-      <h3>Últimos entrenamientos</h3>
-      ${recent.map(l => {
-        const nEx = (l.entries || []).length;
-        const mins = Math.round((l.dur || 0) / 60);
-        return `<div class="rec-row"><span class="name">${esc(l.title || l.date)} · ${l.date}</span><span class="val" style="font-size:.8rem;color:var(--mu)">${nEx} ej · ${mins} min</span></div>`;
-      }).join('')}
-    </div>` : ''}
   `;
 }
+
+function shiftCal(dir) {
+  calMonth += dir;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderHome();
+}
+
+function showDayLog(dateStr) {
+  const logs = S.logs.filter(l => l.date === dateStr);
+  if (!logs.length) { toast('Sin entrenamientos ese día'); return; }
+  let html = '';
+  logs.forEach(l => {
+    const mins = Math.round((l.dur || 0) / 60);
+    html += `<div style="margin-bottom:12px"><strong>${esc(l.title || 'Entrenamiento')}</strong>
+      <span class="mu" style="font-size:.8rem"> · ${mins} min</span>
+      <ul style="margin:6px 0 0;padding:0 0 0 18px;color:var(--mu);font-size:.85rem">`;
+    (l.entries || []).forEach(e => {
+      const sets = (e.sets || []).map(s => `${fmtWeight(s.kg)}×${s.reps}`).join(', ');
+      html += `<li>${esc(e.name)}: ${sets || '—'}</li>`;
+    });
+    html += `</ul></div>`;
+  });
+  $('#log-modal-title').textContent = dateStr;
+  $('#log-modal-body').innerHTML = html;
+  $('#log-modal').hidden = false;
+}
+function closeLogModal() { $('#log-modal').hidden = true; }
 
 /* ===== Calendario ===== */
 function renderWeek() {
@@ -892,13 +986,17 @@ function renderGallery() {
     if (galCat !== 'all' && e.cat !== galCat) return false;
     if (galEquip !== 'all' && e.equip !== galEquip) return false;
     if (galQ && !e.name.toLowerCase().includes(galQ)) return false;
+    if (selectedMuscle) {
+      const pri = e.primary || [], sec = e.secondary || [];
+      if (!pri.includes(selectedMuscle) && !sec.includes(selectedMuscle) && e.cat !== selectedMuscle) return false;
+    }
     return true;
   }).sort((a, b) => a.name.localeCompare(b.name, 'es'));
 
   root.innerHTML = `
     <div class="map-wrap">
       <div class="map-hd">
-        <strong>Mapa muscular</strong>
+        <strong>Mapa muscular</strong><span class="mu" style="font-size:.75rem;display:block;font-weight:400">Toca un músculo para filtrar</span>
         <div class="map-tog">
           <button class="${mapSide === 'front' ? 'on' : ''}" onclick="setMapSide('front')">Frente</button>
           <button class="${mapSide === 'back' ? 'on' : ''}" onclick="setMapSide('back')">Espalda</button>
@@ -920,6 +1018,7 @@ function renderGallery() {
       <button class="cat-btn ${galEquip === 'all' ? 'on' : ''}" onclick="galEquip='all';renderGallery()">Cualquier equipo</button>
       ${EQUIP.map(eq => `<button class="cat-btn ${galEquip === eq.k ? 'on' : ''}" onclick="galEquip='${eq.k}';renderGallery()">${eq.label}</button>`).join('')}
     </div>
+    ${selectedMuscle ? `<button class="btn g" style="margin-bottom:8px" onclick="selectedMuscle=null;renderGallery()">✕ Quitar filtro: ${MG[selectedMuscle]?.label || selectedMuscle}</button>` : ''}
     <button class="btn g" style="margin-bottom:12px" onclick="openCustomModal()">+ Agregar ejercicio personalizado</button>
     ${list.length ? list.map(e => exItemHTML(e)).join('') : '<div class="card mu" style="text-align:center">No se encontraron ejercicios</div>'}
   `;
@@ -947,6 +1046,20 @@ function setMapSide(side) {
   const mini = $('#train-map');
   if (mini) mini.innerHTML = muscleSVG(mapSide, getSessionHeat());
 }
+
+function selectMuscle(k) {
+  selectedMuscle = selectedMuscle === k ? null : k;
+  if (selectedMuscle) {
+    galCat = 'all';
+    toast('Ejercicios: ' + (MG[k]?.label || k));
+  } else {
+    toast('Filtro muscular quitado');
+  }
+  show('programs');
+  showSeg('gallery');
+  renderGallery();
+}
+
 function highlightMuscles(name) {
   const { primary, secondary } = getMuscles(name);
   const heat = {};
@@ -1004,8 +1117,11 @@ function saveCustomEx() {
 function muscleSVG(side, heat = {}) {
   const cls = k => {
     const h = heat[k] || 0;
-    if (h >= 5) return 'hot5'; if (h >= 4) return 'hot4'; if (h >= 3) return 'hot3';
-    if (h >= 2) return 'hot2'; if (h >= 1) return 'hot1'; return '';
+    let c = '';
+    if (h >= 5) c = 'hot5'; else if (h >= 4) c = 'hot4'; else if (h >= 3) c = 'hot3';
+    else if (h >= 2) c = 'hot2'; else if (h >= 1) c = 'hot1';
+    if (selectedMuscle === k) c += ' sel';
+    return c;
   };
   // Estilo MuscleWiki: silueta clara con contornos y relleno al trabajar
   if (side === 'front') {
@@ -1017,19 +1133,19 @@ function muscleSVG(side, heat = {}) {
       <!-- Torso base -->
       <path d="M88 78 L70 95 L58 140 L55 200 L62 250 L78 310 L95 330 L120 315 L145 330 L162 310 L178 250 L185 200 L182 140 L170 95 L152 78 Z" class="body-outline"/>
       <!-- Pecho izq / der -->
-      <path d="M90 88 L118 82 L118 130 Q105 142 90 132 Z" class="m-region ${cls('pecho')}"/>
-      <path d="M122 82 L150 88 L150 132 Q135 142 122 130 Z" class="m-region ${cls('pecho')}"/>
+      <path d="M90 88 L118 82 L118 130 Q105 142 90 132 Z" class="m-region ${cls('pecho')}" data-m="pecho" onclick="selectMuscle('pecho')"/>
+      <path d="M122 82 L150 88 L150 132 Q135 142 122 130 Z" class="m-region ${cls('pecho')}" data-m="pecho" onclick="selectMuscle('pecho')"/>
       <!-- Línea media pecho -->
       <path d="M120 82 L120 145" class="body-line"/>
       <!-- Hombros -->
-      <path d="M70 90 Q52 85 48 105 Q50 120 68 118 Q78 110 78 95 Z" class="m-region ${cls('hombros')}"/>
-      <path d="M170 90 Q188 85 192 105 Q190 120 172 118 Q162 110 162 95 Z" class="m-region ${cls('hombros')}"/>
+      <path d="M70 90 Q52 85 48 105 Q50 120 68 118 Q78 110 78 95 Z" class="m-region ${cls('hombros')}" data-m="hombros" onclick="selectMuscle('hombros')"/>
+      <path d="M170 90 Q188 85 192 105 Q190 120 172 118 Q162 110 162 95 Z" class="m-region ${cls('hombros')}" data-m="hombros" onclick="selectMuscle('hombros')"/>
       <!-- Abdomen (6 pack stylized) -->
-      <path d="M95 148 L145 148 L142 200 L120 210 L98 200 Z" class="m-region ${cls('abdomen')}"/>
+      <path d="M95 148 L145 148 L142 200 L120 210 L98 200 Z" class="m-region ${cls('abdomen')}" data-m="abdomen" onclick="selectMuscle('abdomen')"/>
       <path d="M100 152 L140 152 M100 168 L140 168 M100 184 L140 184 M120 148 L120 200" class="body-line"/>
       <!-- Brazos (bíceps) -->
-      <path d="M48 118 L38 160 L42 200 L58 202 L62 160 L68 120 Z" class="m-region ${cls('brazos')}"/>
-      <path d="M192 118 L202 160 L198 200 L182 202 L178 160 L172 120 Z" class="m-region ${cls('brazos')}"/>
+      <path d="M48 118 L38 160 L42 200 L58 202 L62 160 L68 120 Z" class="m-region ${cls('brazos')}" data-m="brazos" onclick="selectMuscle('brazos')"/>
+      <path d="M192 118 L202 160 L198 200 L182 202 L178 160 L172 120 Z" class="m-region ${cls('brazos')}" data-m="brazos" onclick="selectMuscle('brazos')"/>
       <!-- Antebrazos -->
       <path d="M42 202 L36 250 L52 255 L58 205 Z" class="body-outline"/>
       <path d="M198 202 L204 250 L188 255 L182 205 Z" class="body-outline"/>
@@ -1037,8 +1153,8 @@ function muscleSVG(side, heat = {}) {
       <ellipse cx="40" cy="262" rx="12" ry="10" class="body-outline"/>
       <ellipse cx="200" cy="262" rx="12" ry="10" class="body-outline"/>
       <!-- Piernas (cuádriceps) -->
-      <path d="M82 330 L72 400 L70 450 L95 455 L102 400 L108 335 Z" class="m-region ${cls('piernas')}"/>
-      <path d="M158 330 L168 400 L170 450 L145 455 L138 400 L132 335 Z" class="m-region ${cls('piernas')}"/>
+      <path d="M82 330 L72 400 L70 450 L95 455 L102 400 L108 335 Z" class="m-region ${cls('piernas')}" data-m="piernas" onclick="selectMuscle('piernas')"/>
+      <path d="M158 330 L168 400 L170 450 L145 455 L138 400 L132 335 Z" class="m-region ${cls('piernas')}" data-m="piernas" onclick="selectMuscle('piernas')"/>
       <!-- Líneas cuádriceps -->
       <path d="M88 350 L88 420 M95 345 L92 430 M152 350 L152 420 M145 345 L148 430" class="body-line"/>
       <!-- Pies -->
@@ -1052,27 +1168,27 @@ function muscleSVG(side, heat = {}) {
     <path d="M105 62 L105 78 L135 78 L135 62" class="body-outline"/>
     <path d="M88 78 L70 95 L58 140 L55 200 L62 250 L78 310 L95 330 L120 315 L145 330 L162 310 L178 250 L185 200 L182 140 L170 95 L152 78 Z" class="body-outline"/>
     <!-- Trapecio / espalda alta -->
-    <path d="M90 82 L120 75 L150 82 L148 115 Q120 128 92 115 Z" class="m-region ${cls('espalda')}"/>
+    <path d="M90 82 L120 75 L150 82 L148 115 Q120 128 92 115 Z" class="m-region ${cls('espalda')}" data-m="espalda" onclick="selectMuscle('espalda')"/>
     <!-- Dorsales -->
-    <path d="M88 118 L60 160 L62 220 L90 230 Q95 170 100 130 Z" class="m-region ${cls('espalda')}"/>
-    <path d="M152 118 L180 160 L178 220 L150 230 Q145 170 140 130 Z" class="m-region ${cls('espalda')}"/>
+    <path d="M88 118 L60 160 L62 220 L90 230 Q95 170 100 130 Z" class="m-region ${cls('espalda')}" data-m="espalda" onclick="selectMuscle('espalda')"/>
+    <path d="M152 118 L180 160 L178 220 L150 230 Q145 170 140 130 Z" class="m-region ${cls('espalda')}" data-m="espalda" onclick="selectMuscle('espalda')"/>
     <!-- Lumbar -->
-    <path d="M95 220 L145 220 L142 280 L120 290 L98 280 Z" class="m-region ${cls('espalda')}"/>
+    <path d="M95 220 L145 220 L142 280 L120 290 L98 280 Z" class="m-region ${cls('espalda')}" data-m="espalda" onclick="selectMuscle('espalda')"/>
     <path d="M120 75 L120 280" class="body-line"/>
     <!-- Hombros rear -->
-    <path d="M70 90 Q52 85 48 105 Q50 120 68 118 Q78 110 78 95 Z" class="m-region ${cls('hombros')}"/>
-    <path d="M170 90 Q188 85 192 105 Q190 120 172 118 Q162 110 162 95 Z" class="m-region ${cls('hombros')}"/>
+    <path d="M70 90 Q52 85 48 105 Q50 120 68 118 Q78 110 78 95 Z" class="m-region ${cls('hombros')}" data-m="hombros" onclick="selectMuscle('hombros')"/>
+    <path d="M170 90 Q188 85 192 105 Q190 120 172 118 Q162 110 162 95 Z" class="m-region ${cls('hombros')}" data-m="hombros" onclick="selectMuscle('hombros')"/>
     <!-- Tríceps -->
-    <path d="M48 118 L38 160 L42 200 L58 202 L62 160 L68 120 Z" class="m-region ${cls('brazos')}"/>
-    <path d="M192 118 L202 160 L198 200 L182 202 L178 160 L172 120 Z" class="m-region ${cls('brazos')}"/>
+    <path d="M48 118 L38 160 L42 200 L58 202 L62 160 L68 120 Z" class="m-region ${cls('brazos')}" data-m="brazos" onclick="selectMuscle('brazos')"/>
+    <path d="M192 118 L202 160 L198 200 L182 202 L178 160 L172 120 Z" class="m-region ${cls('brazos')}" data-m="brazos" onclick="selectMuscle('brazos')"/>
     <path d="M42 202 L36 250 L52 255 L58 205 Z" class="body-outline"/>
     <path d="M198 202 L204 250 L188 255 L182 205 Z" class="body-outline"/>
     <ellipse cx="40" cy="262" rx="12" ry="10" class="body-outline"/>
     <ellipse cx="200" cy="262" rx="12" ry="10" class="body-outline"/>
     <!-- Glúteos + isquios -->
-    <path d="M85 320 Q120 305 155 320 L160 360 Q120 380 80 360 Z" class="m-region ${cls('piernas')}"/>
-    <path d="M82 360 L72 420 L70 450 L95 455 L105 400 L108 365 Z" class="m-region ${cls('piernas')}"/>
-    <path d="M158 360 L168 420 L170 450 L145 455 L135 400 L132 365 Z" class="m-region ${cls('piernas')}"/>
+    <path d="M85 320 Q120 305 155 320 L160 360 Q120 380 80 360 Z" class="m-region ${cls('piernas')}" data-m="piernas" onclick="selectMuscle('piernas')"/>
+    <path d="M82 360 L72 420 L70 450 L95 455 L105 400 L108 365 Z" class="m-region ${cls('piernas')}" data-m="piernas" onclick="selectMuscle('piernas')"/>
+    <path d="M158 360 L168 420 L170 450 L145 455 L135 400 L132 365 Z" class="m-region ${cls('piernas')}" data-m="piernas" onclick="selectMuscle('piernas')"/>
     <ellipse cx="80" cy="462" rx="18" ry="10" class="body-outline"/>
     <ellipse cx="160" cy="462" rx="18" ry="10" class="body-outline"/>
   </svg>`;
@@ -1611,11 +1727,13 @@ document.addEventListener('visibilitychange', lock);
 $('#start-modal').addEventListener('click', e => { if (e.target.id === 'start-modal') closeStartModal(); });
 $('#custom-modal').addEventListener('click', e => { if (e.target.id === 'custom-modal') closeCustomModal(); });
 $('#goal-modal').addEventListener('click', e => { if (e.target.id === 'goal-modal') closeGoalModal(); });
+$('#log-modal').addEventListener('click', e => { if (e.target.id === 'log-modal') closeLogModal(); });
 addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (!$('#start-modal').hidden) closeStartModal();
     if (!$('#custom-modal').hidden) closeCustomModal();
     if (!$('#goal-modal').hidden) closeGoalModal();
+    if (!$('#log-modal').hidden) closeLogModal();
   }
 });
 
