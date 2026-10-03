@@ -24,7 +24,6 @@ body{display:flex;flex-direction:column;height:100dvh;overflow:hidden;
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 :focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 
-/* Contenedor de vistas */
 #views{flex:1;overflow-y:auto;overscroll-behavior:contain;
   padding:16px 16px calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 24px)}
 .view{max-width:560px;margin:0 auto}
@@ -33,16 +32,13 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .vh h1{font-size:1.6rem;margin:0}
 .vh p{margin:2px 0 0;color:var(--mu);font-size:.9rem}
 
-/* Placeholders de cada sección */
 .slot{background:var(--surface);border:1px dashed var(--line);border-radius:16px;
   min-height:96px;padding:14px;margin-bottom:12px;color:var(--mu);font-size:.9rem}
 
-/* Selector Rutinas / Ejercicios */
 .seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;margin-bottom:14px}
 .seg button{flex:1;padding:9px 0;border-radius:9px;color:var(--mu);font-weight:600;font-size:.9rem}
 .seg button.active{background:var(--line);color:var(--tx)}
 
-/* Barra de navegación inferior */
 .bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;align-items:flex-end;
   height:calc(var(--nav-h) + env(safe-area-inset-bottom,0px));
   padding-bottom:env(safe-area-inset-bottom,0px);
@@ -53,7 +49,6 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .nav-btn svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .nav-btn.active{color:var(--ac)}
 
-/* Botón central elevado */
 .nav-main{position:relative}
 .fab{width:54px;height:54px;border-radius:50%;margin-top:-26px;display:grid;place-items:center;
   background:var(--ac);color:#1a0a07;border:4px solid var(--bg);box-shadow:0 4px 14px rgba(255,122,102,.35)}
@@ -62,7 +57,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 
 @media (prefers-reduced-motion:no-preference){.nav-btn,.fab{transition:color .15s,box-shadow .15s}}
 
-/* ===== Paso 2: sesión activa ===== */
+/* ===== Sesión activa ===== */
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
 .mu{color:var(--mu)}
 .inp{width:100%;min-width:0;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:10px 4px;font:inherit;text-align:center}
@@ -94,7 +89,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .big{font-size:1.8rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
 .rbar .b{display:flex;gap:6px}
 
-/* ===== Paso 3: Calendario semanal + Modal ===== */
+/* ===== Calendario ===== */
 .day-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;margin-bottom:12px;overflow:hidden}
 .day-card.today{border-color:var(--ac);box-shadow:0 0 0 1px rgba(255,122,102,.25)}
 .day-hd{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;user-select:none}
@@ -112,8 +107,6 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .pex{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
 .pex-h{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .pex-h h3{flex:1;margin:0;font-size:.95rem}
-.pex .tr{grid-template-columns:30px 1fr 1fr 36px}
-.pex .th:nth-child(2),.pex .th:nth-child(3){text-align:center}
 .ptr{display:grid;grid-template-columns:30px 1fr 1fr 36px;gap:6px;align-items:center;margin-bottom:6px}
 .pex .nn{text-align:center;font-weight:700;color:var(--mu);font-size:.9rem}
 .day-empty{text-align:center;color:var(--mu);font-size:.85rem;padding:8px 0 4px}
@@ -125,9 +118,9 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
   -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .modal-bg[hidden]{display:none}
 .modal{background:var(--surface);border:1px solid var(--line);border-radius:20px 20px 16px 16px;
-  width:100%;max-width:400px;padding:22px 18px 18px;box-shadow:0 -8px 40px rgba(0,0,0,.4)}
+  width:100%;max-width:400px;padding:22px 18px 18px;box-shadow:0 -8px 40px rgba(0,0,0,.4);max-height:85dvh;overflow-y:auto}
 .modal h2{margin:0 0 6px;font-size:1.25rem;text-align:center}
-.modal p{margin:0 0 18px;color:var(--mu);font-size:.9rem;text-align:center;line-height:1.4}
+.modal p{margin:0 0 14px;color:var(--mu);font-size:.9rem;text-align:center;line-height:1.4}
 .modal .day-preview{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:16px}
 .modal .day-preview strong{display:block;margin-bottom:6px}
 .modal .day-preview ul{margin:0;padding:0 0 0 18px;color:var(--mu);font-size:.85rem}
@@ -135,6 +128,62 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .modal .actions{display:flex;gap:10px}
 .modal .actions .btn{flex:1}
 .modal .actions .btn.g{flex:.7}
+.modal label{display:block;font-size:.8rem;color:var(--mu);margin:10px 0 4px}
+.modal .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.modal .chip{padding:6px 12px;border-radius:20px;background:var(--line);font-size:.8rem;font-weight:600}
+.modal .chip.on{background:rgba(255,122,102,.25);color:var(--ac)}
+
+/* ===== Paso 4: Galería + Mapa muscular ===== */
+.search-bar{position:relative;margin-bottom:12px}
+.search-bar input{padding-left:38px}
+.search-bar svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:18px;height:18px;
+  stroke:var(--mu);fill:none;stroke-width:2;pointer-events:none}
+.cat-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;margin-bottom:8px;-webkit-overflow-scrolling:touch}
+.cat-row::-webkit-scrollbar{display:none}
+.cat-btn{flex-shrink:0;padding:7px 14px;border-radius:20px;background:var(--surface);border:1px solid var(--line);
+  font-size:.8rem;font-weight:600;color:var(--mu)}
+.cat-btn.on{background:rgba(255,122,102,.2);border-color:var(--ac);color:var(--ac)}
+.ex-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface);border:1px solid var(--line);
+  border-radius:14px;margin-bottom:8px;cursor:pointer}
+.ex-item:active{background:var(--line)}
+.ex-item .ico{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-size:1.1rem;flex-shrink:0}
+.ex-item .meta{flex:1;min-width:0}
+.ex-item .meta strong{display:block;font-size:.95rem}
+.ex-item .meta span{font-size:.75rem;color:var(--mu)}
+.ex-item .add-btn{width:36px;height:36px;border-radius:10px;background:var(--line);display:grid;place-items:center;
+  font-size:1.2rem;font-weight:700;color:var(--ac);flex-shrink:0}
+.muscle-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.mtag{font-size:.65rem;padding:2px 7px;border-radius:6px;font-weight:600}
+.mtag.p{background:rgba(255,122,102,.2);color:var(--ac)}
+.mtag.s{background:rgba(138,138,144,.2);color:var(--mu)}
+
+/* Mapa muscular */
+.map-wrap{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px}
+.map-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.map-hd strong{font-size:.95rem}
+.map-tog{display:flex;background:var(--bg);border-radius:10px;padding:2px}
+.map-tog button{padding:6px 14px;border-radius:8px;font-size:.8rem;font-weight:600;color:var(--mu)}
+.map-tog button.on{background:var(--line);color:var(--tx)}
+.map-svg-box{display:flex;justify-content:center;padding:8px 0}
+.map-svg-box svg{width:100%;max-width:220px;height:auto}
+.map-legend{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px}
+.map-legend span{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--mu)}
+.map-legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+/* Mapa compacto en sesión */
+.map-mini{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:12px}
+.map-mini .map-svg-box svg{max-width:160px}
+.map-mini .map-hd{margin-bottom:6px}
+.map-mini .map-hd strong{font-size:.85rem}
+
+/* Colores de músculos en SVG */
+.m-region{fill:#2a2a2e;stroke:#3a3a40;stroke-width:1;transition:fill .3s}
+.m-region.hot1{fill:#5c3a35}
+.m-region.hot2{fill:#8a4a3e}
+.m-region.hot3{fill:#c45a48}
+.m-region.hot4{fill:#ff7a66}
+.m-region.hot5{fill:#ff9a8a}
+.body-outline{fill:none;stroke:#3a3a40;stroke-width:1.5}
 </style>
 <title>GymTracker</title>
 </head>
@@ -159,7 +208,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
     <div class="slot" id="stats-records">Récords personales</div>
   </section>
 
-  <!-- 3. ENTRENAR (sesión activa) -->
+  <!-- 3. ENTRENAR -->
   <section class="view" data-view="train" hidden>
     <div id="train-root"></div>
   </section>
@@ -176,11 +225,11 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
       <div id="programs-week"></div>
     </div>
     <div class="panel" data-panel="gallery" hidden>
-      <div class="slot" id="gallery-list">Galería de ejercicios</div>
+      <div id="gallery-root"></div>
     </div>
   </section>
 
-  <!-- 5. PERFIL / AJUSTES -->
+  <!-- 5. PERFIL -->
   <section class="view" data-view="profile" aria-labelledby="t-profile" hidden>
     <header class="vh"><h1 id="t-profile">Perfil</h1><p>Datos y ajustes</p></header>
     <div class="slot" id="profile-data">Mis datos</div>
@@ -213,7 +262,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
   </button>
 </nav>
 
-<!-- Modal inicio de entrenamiento -->
+<!-- Modal inicio -->
 <div class="modal-bg" id="start-modal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <h2 id="modal-title">¿Estás listo para entrenar?</h2>
@@ -222,6 +271,26 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
     <div class="actions">
       <button class="btn g" onclick="closeStartModal()">Cancelar</button>
       <button class="btn" id="modal-confirm" onclick="confirmStart()">Empezar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal ejercicio personalizado -->
+<div class="modal-bg" id="custom-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true">
+    <h2>Ejercicio personalizado</h2>
+    <p>Define nombre y músculos involucrados</p>
+    <label>Nombre</label>
+    <input class="inp l" id="custom-name" maxlength="40" placeholder="Ej. Face pull con banda">
+    <label>Categoría principal</label>
+    <div class="chips" id="custom-cat"></div>
+    <label>Músculos principales</label>
+    <div class="chips" id="custom-pri"></div>
+    <label>Músculos secundarios</label>
+    <div class="chips" id="custom-sec"></div>
+    <div class="actions" style="margin-top:16px">
+      <button class="btn g" onclick="closeCustomModal()">Cancelar</button>
+      <button class="btn" onclick="saveCustomEx()">Guardar</button>
     </div>
   </div>
 </div>
@@ -240,7 +309,8 @@ const dkey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '
 let S; try { S = JSON.parse(localStorage.getItem('gt')); } catch (e) {}
 S = S || {};
 S.logs = S.logs || [];
-S.plan = S.plan || {}; // { mon: { title, exercises: [{name, rest, sets:[{kg,reps}]}] }, ... }
+S.plan = S.plan || {};
+S.customEx = S.customEx || [];
 
 let ss = null;
 try { ss = JSON.parse(localStorage.getItem('gt_s')); } catch (e) {}
@@ -249,11 +319,89 @@ if (ss) ss.entries.forEach(e => e.sets.forEach(s => { s.t = s.t || 'E'; }));
 
 const saveS = () => { try { ss ? localStorage.setItem('gt_s', JSON.stringify(ss)) : localStorage.removeItem('gt_s'); } catch (e) {} };
 const saveLogs = () => { try { localStorage.setItem('gt', JSON.stringify(S)); } catch (e) {} };
-const saveAll = () => { saveLogs(); saveS(); };
 
 let R = { end: 0, fin: false }, AC = null, wl = null;
+let mapSide = 'front'; // front | back
+let galCat = 'all';
+let galQ = '';
 
-/* Días de la semana (Lunes = inicio) */
+/* ===== Músculos y biblioteca ===== */
+const MGROUPS = [
+  { k: 'pecho', label: 'Pecho', emoji: '🫁', color: '#ff7a66' },
+  { k: 'espalda', label: 'Espalda', emoji: '🔙', color: '#4ad8a0' },
+  { k: 'piernas', label: 'Piernas', emoji: '🦵', color: '#6b8cff' },
+  { k: 'brazos', label: 'Brazos', emoji: '💪', color: '#ffc857' },
+  { k: 'hombros', label: 'Hombros', emoji: '🏋️', color: '#c084fc' },
+  { k: 'abdomen', label: 'Abdomen', emoji: '🔥', color: '#f472b6' }
+];
+const MG = Object.fromEntries(MGROUPS.map(m => [m.k, m]));
+
+const LIB = [
+  // Pecho
+  { name: 'Press de banca', cat: 'pecho', primary: ['pecho'], secondary: ['hombros', 'brazos'] },
+  { name: 'Press inclinado con barra', cat: 'pecho', primary: ['pecho'], secondary: ['hombros', 'brazos'] },
+  { name: 'Press declinado', cat: 'pecho', primary: ['pecho'], secondary: ['brazos'] },
+  { name: 'Aperturas con mancuernas', cat: 'pecho', primary: ['pecho'], secondary: [] },
+  { name: 'Fondos en paralelas', cat: 'pecho', primary: ['pecho', 'brazos'], secondary: ['hombros'] },
+  { name: 'Press con mancuernas', cat: 'pecho', primary: ['pecho'], secondary: ['hombros', 'brazos'] },
+  { name: 'Crossover en polea', cat: 'pecho', primary: ['pecho'], secondary: [] },
+  // Espalda
+  { name: 'Dominadas', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
+  { name: 'Jalón al pecho', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
+  { name: 'Remo con barra', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
+  { name: 'Remo con mancuerna', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
+  { name: 'Peso muerto', cat: 'espalda', primary: ['espalda', 'piernas'], secondary: [] },
+  { name: 'Remo en máquina', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
+  { name: 'Face pull', cat: 'espalda', primary: ['espalda', 'hombros'], secondary: [] },
+  { name: 'Hiperextensiones', cat: 'espalda', primary: ['espalda'], secondary: [] },
+  // Piernas
+  { name: 'Sentadilla', cat: 'piernas', primary: ['piernas'], secondary: [] },
+  { name: 'Prensa de piernas', cat: 'piernas', primary: ['piernas'], secondary: [] },
+  { name: 'Peso muerto rumano', cat: 'piernas', primary: ['piernas'], secondary: ['espalda'] },
+  { name: 'Zancadas', cat: 'piernas', primary: ['piernas'], secondary: [] },
+  { name: 'Extensiones de cuádriceps', cat: 'piernas', primary: ['piernas'], secondary: [] },
+  { name: 'Curl femoral', cat: 'piernas', primary: ['piernas'], secondary: [] },
+  { name: 'Elevación de gemelos', cat: 'piernas', primary: ['piernas'], secondary: [] },
+  { name: 'Hip thrust', cat: 'piernas', primary: ['piernas'], secondary: [] },
+  { name: 'Sentadilla búlgara', cat: 'piernas', primary: ['piernas'], secondary: [] },
+  // Brazos
+  { name: 'Curl de bíceps con barra', cat: 'brazos', primary: ['brazos'], secondary: [] },
+  { name: 'Curl con mancuernas', cat: 'brazos', primary: ['brazos'], secondary: [] },
+  { name: 'Curl martillo', cat: 'brazos', primary: ['brazos'], secondary: [] },
+  { name: 'Extensiones de tríceps', cat: 'brazos', primary: ['brazos'], secondary: [] },
+  { name: 'Press francés', cat: 'brazos', primary: ['brazos'], secondary: [] },
+  { name: 'Fondos de tríceps', cat: 'brazos', primary: ['brazos'], secondary: ['pecho'] },
+  { name: 'Curl en polea', cat: 'brazos', primary: ['brazos'], secondary: [] },
+  // Hombros
+  { name: 'Press militar', cat: 'hombros', primary: ['hombros'], secondary: ['brazos'] },
+  { name: 'Elevaciones laterales', cat: 'hombros', primary: ['hombros'], secondary: [] },
+  { name: 'Elevaciones frontales', cat: 'hombros', primary: ['hombros'], secondary: [] },
+  { name: 'Pájaros / rear delt', cat: 'hombros', primary: ['hombros'], secondary: ['espalda'] },
+  { name: 'Press Arnold', cat: 'hombros', primary: ['hombros'], secondary: ['brazos'] },
+  { name: 'Encogimientos de hombros', cat: 'hombros', primary: ['hombros', 'espalda'], secondary: [] },
+  // Abdomen
+  { name: 'Crunch', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
+  { name: 'Plancha', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
+  { name: 'Elevación de piernas', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
+  { name: 'Russian twist', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
+  { name: 'Ab wheel', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
+  { name: 'Cable crunch', cat: 'abdomen', primary: ['abdomen'], secondary: [] }
+];
+
+function allExercises() {
+  return [...LIB, ...S.customEx];
+}
+function findEx(name) {
+  const n = name.toLowerCase().trim();
+  return allExercises().find(e => e.name.toLowerCase() === n) || null;
+}
+function getMuscles(name) {
+  const e = findEx(name);
+  if (!e) return { primary: [], secondary: [] };
+  return { primary: e.primary || [], secondary: e.secondary || [] };
+}
+
+/* ===== Días ===== */
 const DAYS = [
   { k: 'mon', n: 'Lunes', short: 'Lun' },
   { k: 'tue', n: 'Martes', short: 'Mar' },
@@ -263,7 +411,7 @@ const DAYS = [
   { k: 'sat', n: 'Sábado', short: 'Sáb' },
   { k: 'sun', n: 'Domingo', short: 'Dom' }
 ];
-const DAY_MAP = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']; // getDay() index
+const DAY_MAP = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 function getTodayKey() { return DAY_MAP[new Date().getDay()]; }
 function ensureDay(key) {
   if (!S.plan[key]) S.plan[key] = { title: '', exercises: [] };
@@ -281,7 +429,11 @@ function show(name) {
   });
   document.getElementById('views').scrollTop = 0;
   if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
-  if (name === 'programs') renderWeek();
+  if (name === 'programs') {
+    const activeSeg = $$('.seg button.active')[0]?.dataset.seg || 'routines';
+    if (activeSeg === 'routines') renderWeek();
+    else renderGallery();
+  }
   if (name === 'train') renderTrain();
 }
 
@@ -292,15 +444,13 @@ function showSeg(name) {
     b.setAttribute('aria-selected', on);
   });
   $$('.panel').forEach(p => (p.hidden = p.dataset.panel !== name));
+  if (name === 'gallery') renderGallery();
+  if (name === 'routines') renderWeek();
 }
 
-/* Nav: botón Entrenar abre modal si no hay sesión */
 $$('.nav-btn').forEach(b => b.addEventListener('click', () => {
-  if (b.dataset.go === 'train' && !ss) {
-    openStartModal();
-  } else {
-    show(b.dataset.go);
-  }
+  if (b.dataset.go === 'train' && !ss) openStartModal();
+  else show(b.dataset.go);
 }));
 $$('.seg button').forEach(b => b.addEventListener('click', () => showSeg(b.dataset.seg)));
 addEventListener('hashchange', () => {
@@ -313,7 +463,7 @@ show(location.hash.slice(1) || 'home');
 if ('serviceWorker' in navigator)
   addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 
-/* ===== Paso 3: Calendario semanal ===== */
+/* ===== Calendario (Paso 3) ===== */
 function renderWeek() {
   const root = $('#programs-week');
   if (!root) return;
@@ -323,9 +473,7 @@ function renderWeek() {
     const day = ensureDay(d.k);
     const isToday = d.k === todayKey;
     const nEx = day.exercises.length;
-    const summary = nEx
-      ? `${nEx} ejercicio${nEx > 1 ? 's' : ''}${day.title ? ' · ' + day.title : ''}`
-      : 'Sin rutina';
+    const summary = nEx ? `${nEx} ejercicio${nEx > 1 ? 's' : ''}${day.title ? ' · ' + day.title : ''}` : 'Sin rutina';
     html += `<div class="day-card${isToday ? ' today' : ''}${day._open ? ' open' : ''}" data-day="${d.k}">
       <div class="day-hd" onclick="toggleDay('${d.k}')">
         <span class="badge">${d.short}</span>
@@ -346,147 +494,316 @@ function renderWeek() {
       </div>
     </div>`;
   });
-  // datalist reutilizable
-  const names = [...new Set([
-    ...S.logs.flatMap(l => l.entries.map(e => e.name)),
-    ...Object.values(S.plan).flatMap(d => (d.exercises || []).map(e => e.name))
-  ])];
+  const names = [...new Set([...allExercises().map(e => e.name), ...S.logs.flatMap(l => l.entries.map(e => e.name))])];
   html += `<datalist id="exlist-plan">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>`;
   root.innerHTML = html;
 }
-
 function toggleDay(key) {
   const day = ensureDay(key);
   day._open = !day._open;
-  // cerrar los demás para vista limpia
   DAYS.forEach(d => { if (d.k !== key) ensureDay(d.k)._open = false; });
   renderWeek();
-  // scroll al día abierto
   const card = document.querySelector(`.day-card[data-day="${key}"]`);
   if (card && day._open) setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
 }
-
-function setDayTitle(key, val) {
-  ensureDay(key).title = val;
-  saveLogs();
-}
-
+function setDayTitle(key, val) { ensureDay(key).title = val; saveLogs(); }
 function planExCard(key, e, i) {
-  let h = `<div class="pex">
-    <div class="pex-h">
-      <h3>${esc(e.name)}</h3>
-      <span class="mu" aria-hidden="true">⏱</span>
-      <input class="inp" inputmode="numeric" value="${e.rest || 90}" style="width:52px;padding:6px 2px"
-        aria-label="Descanso en segundos" oninput="setPlanRest('${key}',${i},this.value)">
-      <span class="mu">s</span>
-      <button class="x" onclick="rmPlanEx('${key}',${i})" aria-label="Quitar ejercicio">✕</button>
-    </div>
+  let h = `<div class="pex"><div class="pex-h"><h3>${esc(e.name)}</h3>
+    <span class="mu">⏱</span>
+    <input class="inp" inputmode="numeric" value="${e.rest || 90}" style="width:52px;padding:6px 2px"
+      oninput="setPlanRest('${key}',${i},this.value)"><span class="mu">s</span>
+    <button class="x" onclick="rmPlanEx('${key}',${i})">✕</button></div>
     <div class="ptr"><span class="th">N°</span><span class="th">kg</span><span class="th">Reps</span><span class="th"></span></div>`;
   (e.sets || []).forEach((s, j) => {
-    h += `<div class="ptr">
-      <span class="nn">${j + 1}</span>
-      <input class="inp" inputmode="decimal" placeholder="kg" value="${esc(s.kg || '')}"
-        oninput="setPlanSet('${key}',${i},${j},'kg',this.value)">
-      <input class="inp" inputmode="numeric" placeholder="reps" value="${esc(s.reps || '')}"
-        oninput="setPlanSet('${key}',${i},${j},'reps',this.value)">
-      <button class="x" onclick="rmPlanSet('${key}',${i},${j})" aria-label="Quitar serie" style="padding:4px">−</button>
-    </div>`;
+    h += `<div class="ptr"><span class="nn">${j + 1}</span>
+      <input class="inp" inputmode="decimal" placeholder="kg" value="${esc(s.kg || '')}" oninput="setPlanSet('${key}',${i},${j},'kg',this.value)">
+      <input class="inp" inputmode="numeric" placeholder="reps" value="${esc(s.reps || '')}" oninput="setPlanSet('${key}',${i},${j},'reps',this.value)">
+      <button class="x" onclick="rmPlanSet('${key}',${i},${j})" style="padding:4px">−</button></div>`;
   });
-  h += `<div class="rowb" style="margin-top:8px">
-    <button class="btn g" onclick="addPlanSet('${key}',${i})">+ Serie</button>
-  </div></div>`;
-  return h;
+  return h + `<div class="rowb" style="margin-top:8px"><button class="btn g" onclick="addPlanSet('${key}',${i})">+ Serie</button></div></div>`;
 }
-
 function addPlanEx(key) {
   const inp = $(`#nx-${key}`);
   const n = (inp ? inp.value : '').trim();
   if (!n) return;
   const day = ensureDay(key);
-  // reutilizar últimas series si existen en logs o en el plan
   const last = lastSets(n);
-  const sets = last && last.length
-    ? last.map(s => ({ kg: s.kg || '', reps: s.reps || '' }))
-    : [{ kg: '', reps: '' }, { kg: '', reps: '' }, { kg: '', reps: '' }];
+  const sets = last && last.length ? last.map(s => ({ kg: s.kg || '', reps: s.reps || '' })) : [{ kg: '', reps: '' }, { kg: '', reps: '' }, { kg: '', reps: '' }];
   day.exercises.push({ name: n, rest: 90, sets });
   day._open = true;
   saveLogs();
   renderWeek();
 }
-
-function rmPlanEx(key, i) {
-  if (!confirm('¿Quitar este ejercicio del día?')) return;
-  ensureDay(key).exercises.splice(i, 1);
-  saveLogs();
-  renderWeek();
-}
-
-function setPlanRest(key, i, v) {
-  ensureDay(key).exercises[i].rest = parseInt(v) || 90;
-  saveLogs();
-}
-
-function setPlanSet(key, i, j, field, val) {
-  ensureDay(key).exercises[i].sets[j][field] = val;
-  saveLogs();
-}
-
+function rmPlanEx(key, i) { if (!confirm('¿Quitar este ejercicio del día?')) return; ensureDay(key).exercises.splice(i, 1); saveLogs(); renderWeek(); }
+function setPlanRest(key, i, v) { ensureDay(key).exercises[i].rest = parseInt(v) || 90; saveLogs(); }
+function setPlanSet(key, i, j, field, val) { ensureDay(key).exercises[i].sets[j][field] = val; saveLogs(); }
 function addPlanSet(key, i) {
   const sets = ensureDay(key).exercises[i].sets;
   const last = sets[sets.length - 1];
   sets.push({ kg: last ? last.kg : '', reps: last ? last.reps : '' });
-  saveLogs();
-  renderWeek();
+  saveLogs(); renderWeek();
 }
-
 function rmPlanSet(key, i, j) {
   const sets = ensureDay(key).exercises[i].sets;
   if (sets.length <= 1) return;
-  sets.splice(j, 1);
-  saveLogs();
-  renderWeek();
+  sets.splice(j, 1); saveLogs(); renderWeek();
 }
 
-/* ===== Modal de inicio ===== */
+/* ===== Modal inicio ===== */
 function openStartModal() {
   const key = getTodayKey();
   const day = S.plan[key];
   const hasPlan = day && day.exercises && day.exercises.length > 0;
   const dayName = DAYS.find(d => d.k === key)?.n || 'Hoy';
-
   $('#modal-title').textContent = '¿Estás listo para entrenar?';
-  const desc = $('#modal-desc');
-  const prev = $('#modal-preview');
-
+  const desc = $('#modal-desc'), prev = $('#modal-preview');
   if (hasPlan) {
     desc.textContent = `Se cargará la rutina de ${dayName}.`;
     prev.hidden = false;
     const title = day.title || dayName;
-    let list = day.exercises.map(e => {
-      const nSets = (e.sets || []).length;
-      return `<li>${esc(e.name)} · ${nSets} serie${nSets !== 1 ? 's' : ''}</li>`;
-    }).join('');
-    prev.innerHTML = `<strong>${esc(title)}</strong><ul>${list}</ul>`;
+    prev.innerHTML = `<strong>${esc(title)}</strong><ul>${day.exercises.map(e => {
+      const n = (e.sets || []).length;
+      return `<li>${esc(e.name)} · ${n} serie${n !== 1 ? 's' : ''}</li>`;
+    }).join('')}</ul>`;
   } else {
     desc.textContent = `No hay rutina programada para ${dayName}. Empezarás una sesión libre.`;
-    prev.hidden = true;
-    prev.innerHTML = '';
+    prev.hidden = true; prev.innerHTML = '';
   }
-
   $('#start-modal').hidden = false;
 }
+function closeStartModal() { $('#start-modal').hidden = true; }
+function confirmStart() { closeStartModal(); startSess(true); show('train'); }
 
-function closeStartModal() {
-  $('#start-modal').hidden = true;
+/* ===== Paso 4: Galería de ejercicios ===== */
+function renderGallery() {
+  const root = $('#gallery-root');
+  if (!root) return;
+  const list = allExercises().filter(e => {
+    if (galCat !== 'all' && e.cat !== galCat) return false;
+    if (galQ && !e.name.toLowerCase().includes(galQ)) return false;
+    return true;
+  }).sort((a, b) => a.name.localeCompare(b.name, 'es'));
+
+  let html = `
+    <div class="map-wrap">
+      <div class="map-hd">
+        <strong>Mapa muscular</strong>
+        <div class="map-tog">
+          <button class="${mapSide === 'front' ? 'on' : ''}" onclick="setMapSide('front')">Frente</button>
+          <button class="${mapSide === 'back' ? 'on' : ''}" onclick="setMapSide('back')">Espalda</button>
+        </div>
+      </div>
+      <div class="map-svg-box" id="gal-map">${muscleSVG(mapSide, getSessionHeat())}</div>
+      <div class="map-legend">${MGROUPS.map(m => `<span><i style="background:${m.color}"></i>${m.label}</span>`).join('')}</div>
+    </div>
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
+      <input class="inp l" id="gal-search" placeholder="Buscar ejercicio…" value="${esc(galQ)}"
+        oninput="galQ=this.value.toLowerCase();renderGallery()">
+    </div>
+    <div class="cat-row">
+      <button class="cat-btn ${galCat === 'all' ? 'on' : ''}" onclick="galCat='all';renderGallery()">Todos</button>
+      ${MGROUPS.map(m => `<button class="cat-btn ${galCat === m.k ? 'on' : ''}" onclick="galCat='${m.k}';renderGallery()">${m.emoji} ${m.label}</button>`).join('')}
+    </div>
+    <button class="btn g" style="margin-bottom:12px" onclick="openCustomModal()">+ Agregar ejercicio personalizado</button>
+    ${list.length ? list.map(e => exItemHTML(e)).join('') : '<div class="card mu" style="text-align:center">No se encontraron ejercicios</div>'}
+  `;
+  root.innerHTML = html;
 }
 
-function confirmStart() {
-  closeStartModal();
-  startSess(true); // fromPlan = true
-  show('train');
+function exItemHTML(e) {
+  const mg = MG[e.cat] || MGROUPS[0];
+  const tags = [
+    ...(e.primary || []).map(k => `<span class="mtag p">${MG[k]?.label || k}</span>`),
+    ...(e.secondary || []).map(k => `<span class="mtag s">${MG[k]?.label || k}</span>`)
+  ].join('');
+  return `<div class="ex-item" onclick="highlightMuscles('${esc(e.name)}')">
+    <div class="ico" style="background:rgba(${hexToRgb(mg.color)},.2)">${mg.emoji}</div>
+    <div class="meta"><strong>${esc(e.name)}</strong>
+      <div class="muscle-tags">${tags}</div>
+    </div>
+    <button class="add-btn" onclick="event.stopPropagation();quickAddToToday('${esc(e.name)}')" title="Agregar a hoy">+</button>
+  </div>`;
 }
 
-/* ===== Paso 2: sesión de entrenamiento (mejorado) ===== */
+function hexToRgb(hex) {
+  const h = hex.replace('#', '');
+  const n = parseInt(h, 16);
+  return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
+}
+
+function setMapSide(side) {
+  mapSide = side;
+  // actualizar solo el SVG si estamos en gallery
+  const box = $('#gal-map');
+  if (box) box.innerHTML = muscleSVG(mapSide, getSessionHeat());
+  // y los botones
+  $$('.map-tog button').forEach(b => b.classList.toggle('on', b.textContent.toLowerCase().includes(side === 'front' ? 'frente' : 'espalda')));
+  // también el mini mapa de sesión
+  const mini = $('#train-map');
+  if (mini) mini.innerHTML = muscleSVG(mapSide, getSessionHeat());
+}
+
+function highlightMuscles(name) {
+  const { primary, secondary } = getMuscles(name);
+  const heat = {};
+  primary.forEach(k => heat[k] = 4);
+  secondary.forEach(k => heat[k] = Math.max(heat[k] || 0, 2));
+  const box = $('#gal-map');
+  if (box) box.innerHTML = muscleSVG(mapSide, heat);
+}
+
+function quickAddToToday(name) {
+  const key = getTodayKey();
+  const day = ensureDay(key);
+  const last = lastSets(name);
+  const sets = last && last.length
+    ? last.map(s => ({ kg: s.kg || '', reps: s.reps || '' }))
+    : [{ kg: '', reps: '' }, { kg: '', reps: '' }, { kg: '', reps: '' }];
+  day.exercises.push({ name, rest: 90, sets });
+  day._open = true;
+  saveLogs();
+  // feedback
+  const btn = event?.target;
+  if (btn) { btn.textContent = '✓'; setTimeout(() => { btn.textContent = '+'; }, 800); }
+}
+
+/* Custom exercise modal */
+let customSel = { cat: 'pecho', pri: [], sec: [] };
+function openCustomModal() {
+  customSel = { cat: 'pecho', pri: [], sec: [] };
+  $('#custom-name').value = '';
+  renderCustomChips();
+  $('#custom-modal').hidden = false;
+}
+function closeCustomModal() { $('#custom-modal').hidden = true; }
+function renderCustomChips() {
+  $('#custom-cat').innerHTML = MGROUPS.map(m =>
+    `<button class="chip ${customSel.cat === m.k ? 'on' : ''}" onclick="customSel.cat='${m.k}';renderCustomChips()">${m.label}</button>`
+  ).join('');
+  $('#custom-pri').innerHTML = MGROUPS.map(m =>
+    `<button class="chip ${customSel.pri.includes(m.k) ? 'on' : ''}" onclick="togCustom('pri','${m.k}')">${m.label}</button>`
+  ).join('');
+  $('#custom-sec').innerHTML = MGROUPS.map(m =>
+    `<button class="chip ${customSel.sec.includes(m.k) ? 'on' : ''}" onclick="togCustom('sec','${m.k}')">${m.label}</button>`
+  ).join('');
+}
+function togCustom(field, k) {
+  const arr = customSel[field];
+  const i = arr.indexOf(k);
+  if (i >= 0) arr.splice(i, 1); else arr.push(k);
+  renderCustomChips();
+}
+function saveCustomEx() {
+  const name = $('#custom-name').value.trim();
+  if (!name) { alert('Escribe un nombre'); return; }
+  if (findEx(name)) { alert('Ya existe un ejercicio con ese nombre'); return; }
+  if (!customSel.pri.length) { alert('Selecciona al menos un músculo principal'); return; }
+  S.customEx.push({
+    name,
+    cat: customSel.cat,
+    primary: [...customSel.pri],
+    secondary: [...customSel.sec].filter(k => !customSel.pri.includes(k))
+  });
+  saveLogs();
+  closeCustomModal();
+  renderGallery();
+}
+
+/* ===== SVG Mapa muscular ===== */
+function muscleSVG(side, heat = {}) {
+  // heat: { pecho: 1-5, ... }
+  const cls = k => {
+    const h = heat[k] || 0;
+    if (h >= 5) return 'hot5';
+    if (h >= 4) return 'hot4';
+    if (h >= 3) return 'hot3';
+    if (h >= 2) return 'hot2';
+    if (h >= 1) return 'hot1';
+    return '';
+  };
+
+  if (side === 'front') {
+    return `<svg viewBox="0 0 200 360" xmlns="http://www.w3.org/2000/svg">
+      <!-- Cabeza -->
+      <ellipse cx="100" cy="28" rx="22" ry="26" class="body-outline" fill="#1e1e22"/>
+      <!-- Cuello -->
+      <rect x="90" y="50" width="20" height="16" rx="4" fill="#1e1e22" stroke="#3a3a40"/>
+      <!-- Torso outline -->
+      <path d="M70 66 Q60 70 55 100 L50 160 Q48 190 55 210 L70 250 L80 250 L100 230 L120 250 L130 250 L145 210 Q152 190 150 160 L145 100 Q140 70 130 66 Z" class="body-outline" fill="#1e1e22"/>
+      <!-- Pecho -->
+      <path d="M72 78 Q100 70 128 78 L130 115 Q100 130 70 115 Z" class="m-region ${cls('pecho')}" data-m="pecho"/>
+      <!-- Hombros (delts front) -->
+      <ellipse cx="58" cy="78" rx="16" ry="14" class="m-region ${cls('hombros')}" data-m="hombros"/>
+      <ellipse cx="142" cy="78" rx="16" ry="14" class="m-region ${cls('hombros')}" data-m="hombros"/>
+      <!-- Abdomen -->
+      <path d="M78 130 Q100 125 122 130 L120 195 Q100 205 80 195 Z" class="m-region ${cls('abdomen')}" data-m="abdomen"/>
+      <!-- Brazos (bíceps) -->
+      <path d="M42 90 Q30 110 32 150 L48 152 Q50 120 55 95 Z" class="m-region ${cls('brazos')}" data-m="brazos"/>
+      <path d="M158 90 Q170 110 168 150 L152 152 Q150 120 145 95 Z" class="m-region ${cls('brazos')}" data-m="brazos"/>
+      <!-- Antebrazos -->
+      <path d="M32 152 L28 200 L44 202 L48 154 Z" fill="#1e1e22" stroke="#3a3a40"/>
+      <path d="M168 152 L172 200 L156 202 L152 154 Z" fill="#1e1e22" stroke="#3a3a40"/>
+      <!-- Piernas (cuádriceps) -->
+      <path d="M72 252 Q70 290 68 330 L90 332 Q92 290 95 255 Z" class="m-region ${cls('piernas')}" data-m="piernas"/>
+      <path d="M128 252 Q130 290 132 330 L110 332 Q108 290 105 255 Z" class="m-region ${cls('piernas')}" data-m="piernas"/>
+      <!-- Manos / pies simplificados -->
+      <ellipse cx="30" cy="208" rx="10" ry="6" fill="#1e1e22" stroke="#3a3a40"/>
+      <ellipse cx="170" cy="208" rx="10" ry="6" fill="#1e1e22" stroke="#3a3a40"/>
+      <ellipse cx="72" cy="340" rx="14" ry="8" fill="#1e1e22" stroke="#3a3a40"/>
+      <ellipse cx="128" cy="340" rx="14" ry="8" fill="#1e1e22" stroke="#3a3a40"/>
+    </svg>`;
+  }
+
+  // BACK
+  return `<svg viewBox="0 0 200 360" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="100" cy="28" rx="22" ry="26" class="body-outline" fill="#1e1e22"/>
+    <rect x="90" y="50" width="20" height="16" rx="4" fill="#1e1e22" stroke="#3a3a40"/>
+    <path d="M70 66 Q60 70 55 100 L50 160 Q48 190 55 210 L70 250 L80 250 L100 230 L120 250 L130 250 L145 210 Q152 190 150 160 L145 100 Q140 70 130 66 Z" class="body-outline" fill="#1e1e22"/>
+    <!-- Trapecios / espalda alta -->
+    <path d="M70 70 Q100 60 130 70 L128 100 Q100 110 72 100 Z" class="m-region ${cls('espalda')}" data-m="espalda"/>
+    <!-- Dorsales -->
+    <path d="M68 100 Q55 140 58 185 L78 190 Q80 140 85 110 Z" class="m-region ${cls('espalda')}" data-m="espalda"/>
+    <path d="M132 100 Q145 140 142 185 L122 190 Q120 140 115 110 Z" class="m-region ${cls('espalda')}" data-m="espalda"/>
+    <!-- Espalda media/lumbar -->
+    <path d="M82 160 Q100 155 118 160 L115 200 Q100 210 85 200 Z" class="m-region ${cls('espalda')}" data-m="espalda"/>
+    <!-- Hombros rear -->
+    <ellipse cx="58" cy="78" rx="16" ry="14" class="m-region ${cls('hombros')}" data-m="hombros"/>
+    <ellipse cx="142" cy="78" rx="16" ry="14" class="m-region ${cls('hombros')}" data-m="hombros"/>
+    <!-- Tríceps -->
+    <path d="M42 90 Q30 110 32 150 L48 152 Q50 120 55 95 Z" class="m-region ${cls('brazos')}" data-m="brazos"/>
+    <path d="M158 90 Q170 110 168 150 L152 152 Q150 120 145 95 Z" class="m-region ${cls('brazos')}" data-m="brazos"/>
+    <path d="M32 152 L28 200 L44 202 L48 154 Z" fill="#1e1e22" stroke="#3a3a40"/>
+    <path d="M168 152 L172 200 L156 202 L152 154 Z" fill="#1e1e22" stroke="#3a3a40"/>
+    <!-- Glúteos / isquios -->
+    <path d="M72 248 Q70 280 68 320 L95 322 Q98 280 100 252 Q102 280 105 322 L132 320 Q130 280 128 248 Q100 260 72 248 Z" class="m-region ${cls('piernas')}" data-m="piernas"/>
+    <ellipse cx="30" cy="208" rx="10" ry="6" fill="#1e1e22" stroke="#3a3a40"/>
+    <ellipse cx="170" cy="208" rx="10" ry="6" fill="#1e1e22" stroke="#3a3a40"/>
+    <ellipse cx="75" cy="335" rx="14" ry="8" fill="#1e1e22" stroke="#3a3a40"/>
+    <ellipse cx="125" cy="335" rx="14" ry="8" fill="#1e1e22" stroke="#3a3a40"/>
+  </svg>`;
+}
+
+/** Calcula el calor muscular de la sesión activa (series efectivas completadas) */
+function getSessionHeat() {
+  const heat = {};
+  if (!ss) return heat;
+  ss.entries.forEach(e => {
+    const done = e.sets.filter(s => s.done && s.t !== 'W').length;
+    if (!done) return;
+    const { primary, secondary } = getMuscles(e.name);
+    primary.forEach(k => { heat[k] = Math.min(5, (heat[k] || 0) + done); });
+    secondary.forEach(k => { heat[k] = Math.min(5, (heat[k] || 0) + Math.ceil(done / 2)); });
+  });
+  return heat;
+}
+
+function updateTrainMap() {
+  const box = $('#train-map');
+  if (box) box.innerHTML = muscleSVG(mapSide, getSessionHeat());
+}
+
+/* ===== Sesión de entrenamiento ===== */
 function lastSets(n) {
   for (const l of [...S.logs].sort((a, b) => a.date < b.date ? 1 : -1)) {
     const e = l.entries.find(e => e.name === n);
@@ -514,9 +831,9 @@ function sumHTML(e) {
   return `<div><b>${vt}</b><span>Volumen total</span></div><div><b>${reps}</b><span>Reps totales</span></div><div><b>${avg ? avg.toFixed(1) : 0} kg</b><span>Peso promedio</span></div>`;
 }
 function exCard(e, i) {
-  let h = `<div class="card ex"><div class="ex-h"><h2>${esc(e.name)}</h2><span class="mu" aria-hidden="true">⏱</span>
- <input class="inp" inputmode="numeric" value="${e.rest}" aria-label="Descanso en segundos" oninput="ss.entries[${i}].rest=parseInt(this.value)||0;saveS()"><span class="mu">s</span>
- <button class="x" onclick="rmEx(${i})" aria-label="Quitar ejercicio">✕</button></div>
+  let h = `<div class="card ex"><div class="ex-h"><h2>${esc(e.name)}</h2><span class="mu">⏱</span>
+ <input class="inp" inputmode="numeric" value="${e.rest}" aria-label="Descanso" oninput="ss.entries[${i}].rest=parseInt(this.value)||0;saveS()"><span class="mu">s</span>
+ <button class="x" onclick="rmEx(${i})">✕</button></div>
  <div class="tr"><span class="th">N°</span><span class="th">Tipo</span><span class="th">kg</span><span class="th">Reps</span><span class="th">✓</span></div>`;
   e.sets.forEach((s, j) => {
     const w = s.t === 'W';
@@ -524,15 +841,15 @@ function exCard(e, i) {
   <button class="ty ${w ? 'w' : 'e'}" onclick="tgl(${i},${j})">${w ? 'Calent.' : 'Efectiva'}</button>
   <input class="inp" inputmode="decimal" placeholder="kg" value="${esc(s.kg)}" oninput="inp(${i},${j},'kg',this.value)">
   <input class="inp" inputmode="numeric" placeholder="reps" value="${esc(s.reps)}" oninput="inp(${i},${j},'reps',this.value)">
-  <button class="ck ${s.done ? 'on' : ''}" onclick="tick(${i},${j},this)" aria-label="Serie completada">✓</button></div>`;
+  <button class="ck ${s.done ? 'on' : ''}" onclick="tick(${i},${j},this)">✓</button></div>`;
   });
-  return h + `<div class="rowb"><button class="btn g" onclick="addS(${i})">+ Agregar serie</button><button class="btn g s" onclick="rmS(${i})" aria-label="Quitar última serie">−</button></div>
+  return h + `<div class="rowb"><button class="btn g" onclick="addS(${i})">+ Agregar serie</button><button class="btn g s" onclick="rmS(${i})">−</button></div>
  <div class="sum" id="sum-${i}">${sumHTML(e)}</div></div>`;
 }
 
 function renderTrain() {
   const root = $('#train-root'), v = $('#views'), sc = v.scrollTop;
-  const names = [...new Set(S.logs.flatMap(l => l.entries.map(e => e.name)))];
+  const names = [...new Set([...allExercises().map(e => e.name), ...S.logs.flatMap(l => l.entries.map(e => e.name))])];
   const dl = `<datalist id="exlist">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>`;
   if (!ss) {
     root.innerHTML = `<header class="vh"><h1>Entrenar</h1><p>Inicio rápido</p></header>
@@ -540,11 +857,24 @@ function renderTrain() {
   <button class="btn" onclick="openStartModal()">Iniciar entrenamiento</button></div>`;
     return;
   }
-  let h = `<div class="sh"><input class="ttl" value="${esc(ss.title)}" maxlength="40" aria-label="Título del entrenamiento" oninput="ss.title=this.value;saveS()">
+  let h = `<div class="sh"><input class="ttl" value="${esc(ss.title)}" maxlength="40" oninput="ss.title=this.value;saveS()">
   <span class="clk" id="g-time">00:00</span><button class="btn fin" onclick="finish()">Finalizar</button></div>`;
+
+  // Mapa muscular en vivo
+  h += `<div class="map-mini">
+    <div class="map-hd">
+      <strong>Trabajo muscular de la sesión</strong>
+      <div class="map-tog">
+        <button class="${mapSide === 'front' ? 'on' : ''}" onclick="setMapSide('front')">Frente</button>
+        <button class="${mapSide === 'back' ? 'on' : ''}" onclick="setMapSide('back')">Espalda</button>
+      </div>
+    </div>
+    <div class="map-svg-box" id="train-map">${muscleSVG(mapSide, getSessionHeat())}</div>
+  </div>`;
+
   if (!ss.entries.length) h += `<div class="card mu" style="text-align:center">Aún no hay ejercicios. Agrega el primero abajo.</div>`;
   ss.entries.forEach((e, i) => h += exCard(e, i));
-  h += `${dl}<div class="addx"><input class="inp l" id="nx" list="exlist" placeholder="Nombre del ejercicio (ej. Press de banca)" maxlength="40" onkeydown="if(event.key==='Enter')addEx()"></div>
+  h += `${dl}<div class="addx"><input class="inp l" id="nx" list="exlist" placeholder="Nombre del ejercicio" maxlength="40" onkeydown="if(event.key==='Enter')addEx()"></div>
  <button class="btn" onclick="addEx()">+ Agregar ejercicio</button><div style="height:110px"></div>
  <div class="rbar" id="rbar"><div onclick="startRest(90)"><small id="rl">Descanso automático</small><div class="big" id="rt">--:--</div></div>
  <div class="b"><button class="btn g s" onclick="adj(-15)">−15</button><button class="btn g s" onclick="adj(15)">+15</button><button class="btn s" onclick="startRest(0)">Saltar</button></div></div>`;
@@ -553,12 +883,10 @@ function renderTrain() {
   tickUI();
 }
 
-/* acciones sesión */
 async function lock() {
   try { if (ss && !document.hidden) wl = await navigator.wakeLock.request('screen'); } catch (e) {}
 }
 
-/** @param {boolean} fromPlan - si true, carga la rutina del día actual */
 function startSess(fromPlan = false) {
   let title = 'Entrenamiento';
   let entries = [];
@@ -633,6 +961,7 @@ function tick(i, j, b) {
   $('#sum-' + i).innerHTML = sumHTML(e);
   if (s.done && e.rest > 0) startRest(e.rest);
   saveS();
+  updateTrainMap(); // ← sincronización muscular en vivo
 }
 function finish() {
   const ent = ss.entries
@@ -654,7 +983,7 @@ function finish() {
   show('home');
 }
 
-/* cronómetros */
+/* Cronómetros */
 function unlock() {
   try { AC = AC || new (window.AudioContext || webkitAudioContext)(); AC.resume(); } catch (e) {}
 }
@@ -701,12 +1030,14 @@ function tickUI() {
 setInterval(tickUI, 250);
 document.addEventListener('visibilitychange', lock);
 
-/* Cerrar modal con Escape o clic fuera */
-$('#start-modal').addEventListener('click', e => {
-  if (e.target.id === 'start-modal') closeStartModal();
-});
+/* Modales */
+$('#start-modal').addEventListener('click', e => { if (e.target.id === 'start-modal') closeStartModal(); });
+$('#custom-modal').addEventListener('click', e => { if (e.target.id === 'custom-modal') closeCustomModal(); });
 addEventListener('keydown', e => {
-  if (e.key === 'Escape' && !$('#start-modal').hidden) closeStartModal();
+  if (e.key === 'Escape') {
+    if (!$('#start-modal').hidden) closeStartModal();
+    if (!$('#custom-modal').hidden) closeCustomModal();
+  }
 });
 
 renderTrain();
