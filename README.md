@@ -1,5 +1,7 @@
 # GymTracker – Esqueleto funcional
 
+https://benavitrex.github.io/gym-tracker/#profile
+
 App de seguimiento de gimnasio lista para usar en el celular.
 
 ## Cómo probarla YA
