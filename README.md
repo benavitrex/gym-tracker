@@ -1,69 +1,87 @@
-# GymTracker – Esqueleto funcional
+# GymTracker
 
-https://benavitrex.github.io/gym-tracker/#profile
+App web progresiva (PWA) para registrar entrenamientos, planificar la semana, ver estadísticas y seguir el mapa muscular. Funciona offline y se puede instalar en el teléfono.
 
-App de seguimiento de gimnasio lista para usar en el celular.
+## Archivos
 
-## Cómo probarla YA
+| Archivo | Descripción |
+|---------|-------------|
+| `index.html` | App completa (UI + lógica) |
+| `sw.js` | Service Worker (caché offline) |
+| `manifest.json` | Manifest PWA |
+| `icon-192.png` / `icon-512.png` | Iconos de instalación |
+| `favicon.png` | Favicon del navegador |
+| `.nojekyll` | Evita el procesado Jekyll en GitHub Pages |
 
-### Opción 1 – Desde el celular (recomendado)
-1. Sube la carpeta `gymtracker` a **GitHub**.
-2. Activa **GitHub Pages** (Settings → Pages → Source: main branch).
-3. Abre la URL que te dan en el navegador del celular (Chrome o Safari).
-4. En Chrome: menú → **“Añadir a pantalla de inicio”**.  
-   En Safari (iPhone): Compartir → **“Añadir a pantalla de inicio”**.
+Todo usa **rutas relativas** (`./`, `sw.js`, `manifest.json`) para que funcione en la raíz del repo o en un subpath de GitHub Pages.
 
-### Opción 2 – Local
-1. Abre la carpeta con **Live Server** en VS Code (o cualquier servidor local).
-2. Abre la URL en el navegador del celular (misma red WiFi) o en el PC.
+## Probar en local
 
-## Qué incluye este esqueleto
-
-- **Hoy**: Ver el día actual + añadir ejercicios con series, peso y repeticiones.
-- **Calendario**: Vista mensual. Los días entrenados se marcan en verde. Toca un día para ver el detalle.
-- **Historial**: Lista de todos los entrenamientos guardados.
-- **Progreso**:
-  - Gráfico de evolución de peso máximo por ejercicio.
-  - Gráfico de volumen por grupo muscular.
-  - Estadísticas de músculos más trabajados.
-- **Guardado automático**: Todo se guarda en el `localStorage` del navegador (no se pierde al cerrar).
-- **PWA**: Se puede instalar como app y funciona offline (después de la primera visita).
-
-## Estructura de datos
-
-Cada sesión se guarda así:
-
-```json
-{
-  "id": "1727...",
-  "date": "2026-10-03",
-  "completed": true,
-  "exercises": [
-    {
-      "name": "Press banca",
-      "muscle": "pecho",
-      "sets": [
-        { "reps": 10, "weight": 60 },
-        { "reps": 8, "weight": 70 }
-      ]
-    }
-  ]
-}
+```bash
+# Desde la carpeta del proyecto
+npx --yes serve .
+# o
+python3 -m http.server 8080
 ```
 
-## Próximos pasos posibles
+Abre `http://localhost:3000` (o el puerto que indique) en el móvil o en Chrome.
 
-- Mapa del cuerpo interactivo (SVG coloreado).
-- Rutinas predefinidas por día de la semana.
-- Notificaciones (“Hoy te toca pierna”).
-- Sincronización con Firebase (para varios dispositivos).
-- Exportar datos a CSV / Excel.
-- Temporizador de descanso entre series.
+## Publicar en GitHub Pages
 
-## Notas
+### Opción A — Interfaz web de GitHub
 
-- Los datos están solo en **ese navegador**. Si limpias datos del navegador se borran.
-- Para sincronizar entre celular y PC más adelante se puede conectar Firebase (gratis).
-- El diseño es **mobile-first** (pensado para celulares).
+1. Crea un repositorio nuevo (por ejemplo `gymtracker`).
+2. Sube **todos** los archivos de esta carpeta a la rama `main` (Drag & drop en *Add file → Upload files*, o usa la opción B).
+3. Ve a **Settings → Pages**.
+4. En *Build and deployment*:
+   - **Source:** Deploy from a branch
+   - **Branch:** `main` / `/ (root)`
+5. Guarda. En 1–2 minutos la app estará en:
+   - `https://TU_USUARIO.github.io/gymtracker/`
+   (si el repo se llama `gymtracker`)
 
-¡Listo para usar y mejorar!
+### Opción B — Línea de comandos (Git)
+
+```bash
+# 1. Entra a la carpeta con los archivos
+cd gymtracker   # o el nombre de tu carpeta
+
+# 2. Inicializa Git (solo la primera vez)
+git init
+git add .
+git commit -m "GymTracker PWA lista para GitHub Pages"
+
+# 3. Crea el repo vacío en GitHub y enlázalo
+git branch -M main
+git remote add origin https://github.com/TU_USUARIO/gymtracker.git
+git push -u origin main
+```
+
+Luego activa Pages como en el paso 3–5 de la opción A.
+
+### Si usas un subpath (repo que no es `usuario.github.io`)
+
+La app ya usa rutas relativas (`./`, `href="manifest.json"`). No hace falta cambiar nada: GitHub Pages la servirá correctamente en `/nombre-del-repo/`.
+
+## Instalar como app en el teléfono
+
+1. Abre la URL de GitHub Pages en **Chrome (Android)** o **Safari (iOS)**.
+2. **Android:** menú ⋮ → *Instalar aplicación* / *Añadir a la pantalla de inicio*.
+3. **iOS:** botón Compartir → *Añadir a pantalla de inicio*.
+4. Se abre a pantalla completa (standalone), sin barra del navegador.
+
+## Datos
+
+Todo se guarda en el **localStorage** del navegador (rutinas, logs, temas, objetivos).  
+En **Perfil** puedes exportar / importar un JSON de respaldo.
+
+## Temas incluidos
+
+- Dark OLED (por defecto)
+- Dracula
+- Rosé Pine
+- Emerald
+
+---
+
+Hecho para usarse como PWA móvil. Si actualizas `index.html` o `sw.js`, sube de nuevo y, si hace falta, incrementa la versión del caché en `sw.js` (`gymtracker-vN`) para forzar la actualización en clientes ya instalados.
