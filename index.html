@@ -222,6 +222,33 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .unit-btn{flex:1;padding:12px;border-radius:12px;border:2px solid var(--line);font-weight:700;text-align:center}
 .unit-btn.on{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 15%,transparent);color:var(--ac)}
 .set-actions{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+
+/* Home dashboard */
+.home-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.home-card h3{margin:0 0 10px;font-size:.95rem}
+.home-today-ex{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.home-today-ex:last-child{border-bottom:0}
+.home-today-ex .dot{width:8px;height:8px;border-radius:50%;background:var(--ac);flex-shrink:0}
+.home-today-ex span{flex:1;font-size:.9rem}
+.home-today-ex small{color:var(--mu);font-size:.75rem}
+.week-dots{display:flex;justify-content:space-between;gap:4px;margin-top:8px}
+.week-dot{flex:1;text-align:center}
+.week-dot .circle{width:36px;height:36px;border-radius:50%;margin:0 auto 4px;display:grid;place-items:center;
+  background:var(--bg);border:2px solid var(--line);font-size:.7rem;font-weight:700;color:var(--mu)}
+.week-dot.done .circle{background:color-mix(in srgb,var(--ac) 25%,transparent);border-color:var(--ac);color:var(--ac)}
+.week-dot.today .circle{border-color:var(--ac);box-shadow:0 0 0 2px color-mix(in srgb,var(--ac) 30%,transparent)}
+.week-dot .lbl{font-size:.65rem;color:var(--mu)}
+.streak{display:flex;align-items:center;gap:10px;padding:10px 0}
+.streak .num{font-size:1.8rem;font-weight:800;color:var(--ac);font-variant-numeric:tabular-nums}
+.streak .txt{font-size:.85rem;color:var(--mu);line-height:1.3}
+
+/* Toast */
+.toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 16px);
+  transform:translateX(-50%) translateY(20px);background:var(--surface);border:1px solid var(--line);
+  color:var(--tx);padding:12px 20px;border-radius:12px;font-size:.9rem;font-weight:600;
+  z-index:30;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);white-space:nowrap;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 <title>GymTracker</title>
 </head>
@@ -232,10 +259,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
   <!-- 1. INICIO -->
   <section class="view" data-view="home" aria-labelledby="t-home">
     <header class="vh"><h1 id="t-home">Inicio</h1><p>Tu resumen de hoy</p></header>
-    <div class="slot" id="home-today">Entrenamiento de hoy</div>
-    <div class="slot" id="home-week">Semana actual</div>
-    <div class="slot" id="home-attendance">Gráfico de asistencia</div>
-    <div class="slot" id="home-progress">Progreso de pesos</div>
+    <div id="home-root"></div>
   </section>
 
   <!-- 2. ESTADÍSTICAS -->
@@ -295,6 +319,9 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
     <span>Perfil</span>
   </button>
 </nav>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
 
 <!-- Modal inicio -->
 <div class="modal-bg" id="start-modal" hidden>
@@ -524,6 +551,7 @@ function show(name) {
     const activeSeg = $$('.seg button.active')[0]?.dataset.seg || 'routines';
     if (activeSeg === 'routines') renderWeek(); else renderGallery();
   }
+  if (name === 'home') renderHome();
   if (name === 'train') renderTrain();
   if (name === 'stats') renderStats();
   if (name === 'profile') renderProfile();
@@ -554,6 +582,131 @@ show(location.hash.slice(1) || 'home');
 
 if ('serviceWorker' in navigator)
   addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+
+
+/* ===== Toast UX ===== */
+let toastTimer = null;
+function toast(msg, ms = 2200) {
+  const el = $('#toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), ms);
+}
+
+/* ===== Home dashboard ===== */
+function renderHome() {
+  const root = $('#home-root');
+  if (!root) return;
+  const todayKey = getTodayKey();
+  const day = S.plan[todayKey];
+  const dayName = DAYS.find(d => d.k === todayKey)?.n || 'Hoy';
+  const hasPlan = day && day.exercises && day.exercises.length > 0;
+  const todayStr = dkey(new Date());
+  const trainedToday = S.logs.some(l => l.date === todayStr);
+  const { vol, reps, sets, secs } = computeStats();
+  const hours = (secs / 3600).toFixed(1);
+
+  // Streak: consecutive days with at least 1 log ending today or yesterday
+  let streak = 0;
+  const dates = new Set(S.logs.map(l => l.date));
+  const cursor = new Date();
+  // if not trained today, start from yesterday
+  if (!dates.has(dkey(cursor))) cursor.setDate(cursor.getDate() - 1);
+  while (dates.has(dkey(cursor))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  // Week attendance (Mon-Sun of current week)
+  const now = new Date();
+  const dow = now.getDay(); // 0=Sun
+  const mondayOffset = dow === 0 ? -6 : 1 - dow;
+  const weekDots = DAYS.map((d, i) => {
+    const dt = new Date(now);
+    dt.setDate(now.getDate() + mondayOffset + i);
+    const key = dkey(dt);
+    const done = dates.has(key);
+    const isToday = key === todayStr;
+    return { short: d.short, done, isToday };
+  });
+
+  // Recent logs
+  const recent = [...S.logs].sort((a, b) => a.date < b.date ? 1 : -1).slice(0, 5);
+
+  let todayHTML;
+  if (ss) {
+    todayHTML = `<div class="home-card">
+      <h3>Sesión en curso</h3>
+      <p style="margin:0 0 10px;font-size:.9rem"><strong>${esc(ss.title)}</strong> · ${ss.entries.length} ejercicio${ss.entries.length !== 1 ? 's' : ''}</p>
+      <button class="btn" onclick="show('train')">Continuar entrenamiento</button>
+    </div>`;
+  } else if (trainedToday) {
+    todayHTML = `<div class="home-card">
+      <h3>Hoy · ${dayName}</h3>
+      <p class="mu" style="margin:0 0 10px;font-size:.9rem">✓ Ya entrenaste hoy. ¡Buen trabajo!</p>
+      <button class="btn g" onclick="openStartModal()">Entrenar de nuevo</button>
+    </div>`;
+  } else if (hasPlan) {
+    todayHTML = `<div class="home-card">
+      <h3>Hoy · ${esc(day.title || dayName)}</h3>
+      ${day.exercises.map(e => {
+        const n = (e.sets || []).length;
+        return `<div class="home-today-ex"><span class="dot"></span><span>${esc(e.name)}</span><small>${n} serie${n !== 1 ? 's' : ''}</small></div>`;
+      }).join('')}
+      <button class="btn" style="margin-top:12px" onclick="openStartModal()">Empezar entrenamiento</button>
+    </div>`;
+  } else {
+    todayHTML = `<div class="home-card">
+      <h3>Hoy · ${dayName}</h3>
+      <p class="mu" style="margin:0 0 10px;font-size:.9rem">No hay rutina programada. Configúrala en Programas o empieza una sesión libre.</p>
+      <button class="btn" onclick="openStartModal()">Sesión libre</button>
+      <button class="btn g" style="margin-top:8px" onclick="show('programs')">Ir a Programas</button>
+    </div>`;
+  }
+
+  root.innerHTML = `
+    ${todayHTML}
+
+    <div class="home-card">
+      <h3>Racha</h3>
+      <div class="streak">
+        <div class="num">${streak}</div>
+        <div class="txt">${streak === 1 ? 'día seguido' : 'días seguidos'}<br>entrenando</div>
+      </div>
+    </div>
+
+    <div class="home-card">
+      <h3>Esta semana</h3>
+      <div class="week-dots">
+        ${weekDots.map(w => `
+          <div class="week-dot${w.done ? ' done' : ''}${w.isToday ? ' today' : ''}">
+            <div class="circle">${w.done ? '✓' : w.short.charAt(0)}</div>
+            <div class="lbl">${w.short}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="home-card">
+      <h3>Resumen rápido</h3>
+      <div class="kpi-grid" style="margin-bottom:0">
+        <div class="kpi" style="padding:10px"><b style="font-size:1.1rem">${S.logs.length}</b><span>Sesiones</span></div>
+        <div class="kpi" style="padding:10px"><b style="font-size:1.1rem">${hours} h</b><span>Tiempo total</span></div>
+      </div>
+    </div>
+
+    ${recent.length ? `<div class="home-card">
+      <h3>Últimos entrenamientos</h3>
+      ${recent.map(l => {
+        const nEx = (l.entries || []).length;
+        const mins = Math.round((l.dur || 0) / 60);
+        return `<div class="rec-row"><span class="name">${esc(l.title || l.date)} · ${l.date}</span><span class="val" style="font-size:.8rem;color:var(--mu)">${nEx} ej · ${mins} min</span></div>`;
+      }).join('')}
+    </div>` : ''}
+  `;
+}
 
 /* ===== Calendario ===== */
 function renderWeek() {
@@ -1064,11 +1217,13 @@ function renderProfile() {
 
 function setTheme(key) {
   applyTheme(key);
+  toast('Tema aplicado');
   renderProfile();
 }
 function setUnits(u) {
   S.settings.units = u;
   saveLogs();
+  toast('Unidades: ' + u);
   renderProfile();
   // refresh open views that show weights
   if (!$('.view[data-view="stats"]').hidden) renderStats();
@@ -1086,6 +1241,7 @@ function exportData() {
   a.download = `gymtracker-backup-${dkey(new Date())}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
+  toast('Datos exportados');
 }
 function importData() { $('#import-file').click(); }
 function handleImport(ev) {
@@ -1119,8 +1275,9 @@ function clearData() {
   S = { logs: [], plan: {}, customEx: [], settings: S.settings, goals: [] };
   saveLogs();
   ss = null; saveS();
-  alert('Datos borrados');
+  toast('Datos borrados');
   renderProfile();
+  renderHome();
 }
 
 /* ===== Sesión ===== */
@@ -1263,6 +1420,7 @@ function finish() {
     if (!confirm('¿Finalizar y guardar el entrenamiento?')) return;
     S.logs.push({ date: ss.date, title: ss.title, dur: Math.round((Date.now() - ss.start) / 1000), entries: ent });
     saveLogs();
+    toast('Entrenamiento guardado');
   } else if (!confirm('No completaste ninguna serie efectiva. ¿Descartar el entrenamiento?')) return;
   ss = null; saveS(); R = { end: 0, fin: false };
   try { wl && wl.release(); } catch (e) {}
