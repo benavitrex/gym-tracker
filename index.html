@@ -73,6 +73,7 @@
   </header>
   <div class="ds-scroll" id="day-scroll">
     <h1 id="day-name"></h1>
+    <div id="day-radar"></div>
     <div id="day-body"></div>
   </div>
 </section>
@@ -129,8 +130,9 @@
     <h2 id="man-title">Añadir ejercicio a mano</h2>
     <p>Escribe cualquier nombre; lo clasifico por ti.</p>
     <label for="man-name">Nombre del ejercicio</label>
-    <input class="inp l" id="man-name" maxlength="40" autocomplete="off" placeholder="Ej. Press inclinado en Smith"
+    <input class="inp l" id="man-name" list="exlist-man" maxlength="40" autocomplete="off" placeholder="Ej. Press inclinado multipower"
       oninput="onManualInput()" onkeydown="if(event.key==='Enter')saveManualEx()">
+    <datalist id="exlist-man"></datalist>
     <div class="detect" id="man-detect" aria-live="polite"></div>
     <label>Grupo muscular (opcional)</label>
     <div class="chips" id="man-cat"></div>

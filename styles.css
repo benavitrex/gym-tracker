@@ -33,7 +33,7 @@ h1,h2{font-family:var(--fd);font-weight:700;letter-spacing:-.01em}
 .hint{font-size:.8rem;color:var(--mu);margin:0 0 var(--sp-3)}
 
 /* Superficies en capas */
-.card,.day-card,.home-card,.kpi,.chart-card,.goals-card,.records-card,.set-card,.map-wrap,.map-mini{
+.card,.day-card,.home-card,.kpi,.chart-card,.goals-card,.records-card,.set-card{
   background:var(--surface);border:1px solid var(--bd);border-radius:var(--r-lg);box-shadow:var(--sh);
   padding:var(--sp-3);margin-bottom:var(--sp-3)}
 .card h3,.home-card h3,.goals-card h3,.records-card h3,.set-card h3{font-size:.95rem;font-weight:600;margin-bottom:var(--sp-3)}
@@ -41,15 +41,14 @@ h1,h2{font-family:var(--fd);font-weight:700;letter-spacing:-.01em}
 .pex,.modal .day-preview{background:var(--bg);border:1px solid var(--bd);border-radius:var(--r-md);padding:var(--sp-3);margin-bottom:var(--sp-2)}
 
 /* Transiciones y estados */
-.nav-btn,.btn,.x,.ck,.ty,.cat-btn,.seg button,.map-tog button,.chart-range button,.cal-nav button,
-.cal-day.in,.chip,.theme-btn,.unit-btn,.add-btn,.day-hd,.ex-item,.m-region,.inp{transition:all .2s ease-in-out}
+.nav-btn,.btn,.x,.ck,.ty,.cat-btn,.seg button,.chart-range button,.cal-nav button,
+.cal-day.in,.chip,.theme-btn,.unit-btn,.add-btn,.day-hd,.ex-item,.inp{transition:all .2s ease-in-out}
 @media (hover:hover){
   .btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
   .btn.g:hover,.x:hover,.day-hd:hover,.ex-item:hover{background:var(--s2)}
   .cat-btn:hover,.chip:hover,.theme-btn:hover,.unit-btn:hover,.cal-nav button:hover,.cal-day.in:hover,.inp:hover{border-color:color-mix(in srgb,var(--ac) 55%,transparent)}
-  .seg button:hover,.map-tog button:hover,.chart-range button:hover,.nav-btn:hover{color:var(--tx)}
-  .ck:hover,.ty:hover,.add-btn:hover{filter:brightness(1.15)}
-  .m-region:hover{filter:brightness(1.2)}
+  .seg button:hover,.chart-range button:hover,.nav-btn:hover{color:var(--tx)}
+  .ck:hover,.ty:hover{filter:brightness(1.15)}
 }
 .btn:active,.ck:active,.ty:active,.x:active,.cat-btn:active,.chip:active,.unit-btn:active,.theme-btn:active,.add-btn:active,.cal-day.in:active{transform:scale(.96)}
 .day-hd:active,.ex-item:active{background:var(--line)}
@@ -163,44 +162,14 @@ h1,h2{font-family:var(--fd);font-weight:700;letter-spacing:-.01em}
   @keyframes sheet{from{transform:translateY(24px);opacity:0}}
 }
 
-/* Galería */
-.search-bar{position:relative;margin-bottom:var(--sp-3)}
-.search-bar input{padding-left:40px}
-.search-bar svg{position:absolute;left:var(--sp-3);top:50%;transform:translateY(-50%);width:18px;height:18px;stroke:var(--mu);fill:none;stroke-width:2;pointer-events:none}
-.cat-row{display:flex;gap:var(--sp-2);overflow-x:auto;padding-bottom:var(--sp-2);margin-bottom:var(--sp-2);-webkit-overflow-scrolling:touch}
-.cat-row::-webkit-scrollbar{display:none}
-.cat-btn{flex-shrink:0;min-height:36px;padding:0 var(--sp-3);border-radius:999px;background:var(--surface);border:1px solid var(--bd);font-size:.8rem;font-weight:600;color:var(--mu)}
-.cat-btn.on{background:color-mix(in srgb,var(--ac) 18%,transparent);border-color:var(--ac);color:var(--ac)}
-.ex-item{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3);background:var(--surface);border:1px solid var(--bd);border-radius:var(--r-md);margin-bottom:var(--sp-2);cursor:pointer;box-shadow:var(--sh)}
-.ex-item .ico{width:44px;height:44px;border-radius:var(--r-md);display:grid;place-items:center;font-size:1.1rem;flex-shrink:0}
-.ex-item .meta{flex:1;min-width:0}.ex-item .meta strong{display:block;font-size:.95rem}
-.add-btn{width:44px;height:44px;border-radius:var(--r-md);background:var(--line);display:grid;place-items:center;font-size:1.2rem;font-weight:700;color:var(--ac);flex-shrink:0}
+/* Etiquetas musculares y selector de rango */
 .muscle-tags{display:flex;flex-wrap:wrap;gap:var(--sp-1);margin-top:var(--sp-1)}
 .mtag{font-size:.68rem;padding:2px var(--sp-2);border-radius:6px;font-weight:600}
 .mtag.p{background:color-mix(in srgb,var(--ac) 18%,transparent);color:var(--ac)}
 .mtag.s{background:var(--line);color:var(--mu)}
-
-/* Mapa muscular */
-.map-hd{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-2);margin-bottom:var(--sp-2)}
-.map-hd strong{font-size:.95rem}
-.map-tog,.chart-range{display:flex;background:var(--bg);border:1px solid var(--bd);border-radius:var(--r-md);padding:2px}
-.map-tog button,.chart-range button{min-height:32px;padding:0 var(--sp-3);border-radius:var(--r-sm);font-size:.8rem;font-weight:600;color:var(--mu)}
-.map-tog button.on,.chart-range button.on{background:var(--line);color:var(--tx)}
-.map-svg-box{display:flex;justify-content:center;padding:var(--sp-2) 0}
-.map-svg-box svg{width:100%;max-width:280px;height:auto}
-.map-mini{padding:var(--sp-2) var(--sp-3)}.map-mini .map-svg-box svg{max-width:200px}
-.map-legend{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-3);justify-content:center;margin-top:var(--sp-2)}
-.map-legend span{display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--mu)}
-.map-legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
-.body-outline{fill:var(--s2);stroke:color-mix(in srgb,var(--tx) 22%,transparent);stroke-width:1.5}
-.body-line{fill:none;stroke:color-mix(in srgb,var(--tx) 18%,transparent);stroke-width:1}
-.m-region{fill:color-mix(in srgb,var(--surface) 80%,var(--tx));stroke:color-mix(in srgb,var(--tx) 25%,transparent);stroke-width:1.2;cursor:pointer}
-.m-region.hot1{fill:color-mix(in srgb,var(--ac) 25%,var(--s2))}
-.m-region.hot2{fill:color-mix(in srgb,var(--ac) 45%,var(--s2))}
-.m-region.hot3{fill:color-mix(in srgb,var(--ac) 65%,var(--s2))}
-.m-region.hot4{fill:color-mix(in srgb,var(--ac) 85%,var(--s2))}
-.m-region.hot5{fill:var(--ac)}
-.m-region.sel{stroke:var(--ac)!important;stroke-width:2.5!important}
+.chart-range{display:flex;background:var(--bg);border:1px solid var(--bd);border-radius:var(--r-md);padding:2px}
+.chart-range button{min-height:32px;padding:0 var(--sp-3);border-radius:var(--r-sm);font-size:.8rem;font-weight:600;color:var(--mu)}
+.chart-range button.on{background:var(--line);color:var(--tx)}
 
 /* Estadísticas */
 .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);margin-bottom:var(--sp-3)}
@@ -289,18 +258,12 @@ h1,h2{font-family:var(--fd);font-weight:700;letter-spacing:-.01em}
 @keyframes grow{from{width:0}}
 .rk-pct{font-size:.75rem;color:var(--mu);text-align:right;font-variant-numeric:tabular-nums}
 .mchips{margin-top:var(--sp-3)}
-.map-foot{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);flex-wrap:wrap}
-.ramp{display:flex;align-items:center;gap:var(--sp-2);font-size:.7rem;color:var(--mu)}
-.ramp i{width:72px;height:8px;border-radius:4px;background:linear-gradient(90deg,color-mix(in srgb,var(--ac) 20%,var(--s2)),var(--ac))}
-#hmap .map-hd h3{margin:0}
-.m-region[class*="hot"]{animation:heatin .9s ease-out both}
-@keyframes heatin{from{fill:var(--s2)}}
 
 /* ===== Symmetry: Inter, lima neón, bento ===== */
 :root{--bg:#0C0C0E;--surface:#16161A;--line:#26262c;--ac:#D4FF00;--on-ac:#0C0C0E;--bd:rgba(255,255,255,.08);--r-lg:18px;
   --fd:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--fb:var(--fd)}
 h1,h2,h3,.big,.kpi b,.sum b,.streak .num,.rk-top b,.rec-row .val,.cal-hd strong,.ttl{letter-spacing:-.02em}
-.card,.home-card,.kpi,.chart-card,.goals-card,.records-card,.set-card,.map-wrap,.map-mini{padding:18px;border-radius:18px}
+.card,.home-card,.kpi,.chart-card,.goals-card,.records-card,.set-card{padding:18px;border-radius:18px}
 .day-card{border-radius:18px}
 .btn.fin{background:var(--ac);color:var(--on-ac)}.clk{color:var(--ac)}.ck.on{background:var(--ac);color:var(--on-ac)}
 #home-root,#stats-root{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}

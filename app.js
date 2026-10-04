@@ -39,11 +39,11 @@ const saveS = () => { try { ss ? localStorage.setItem('gt_s', JSON.stringify(ss)
 const saveLogs = () => { try { localStorage.setItem('gt', JSON.stringify(S)); } catch (e) {} };
 
 let R = { end: 0, fin: false }, AC = null, wl = null;
-let mapSide = 'front', chartDays = 30;
+let chartDays = 30;
 let openDayKey = null, dayCloseTimer = null;
+let dayRadarCur = null, dayRadarRaf = 0;
 let exName = null, exCal = { y: 0, m: 0 }, exCloseTimer = null, manualCat = null;
 let calYear = new Date().getFullYear(), calMonth = new Date().getMonth(); // 0-11
-let selectedMuscle = null;
 
 /* ===== Temas ===== */
 const THEMES = {
@@ -160,7 +160,10 @@ function findEx(name) {
 }
 function getMuscles(name) {
   const e = findEx(name);
-  if (!e) return { primary: [], secondary: [] };
+  if (!e) {
+    const d = detectEx(name);
+    return d ? { primary: d.primary, secondary: d.secondary } : { primary: [], secondary: [] };
+  }
   return { primary: e.primary || [], secondary: e.secondary || [] };
 }
 
@@ -185,7 +188,7 @@ function ensureDay(key) {
 const REDUCED = matchMedia('(prefers-reduced-motion:reduce)').matches;
 const RANGES = [{k:'week',l:'Semana',d:7},{k:'month',l:'Mes',d:30},{k:'all',l:'Todo',d:0}];
 const RAD = ['pecho','hombros','brazos','abdomen','piernas','espalda'];
-let radarRange = 'week', radarPlan = false, homeRange = 'week';
+let radarRange = 'week', radarPlan = false;
 const exVol = sets => (sets || []).reduce((a, s) => a + num(s.kg) * (parseInt(s.reps) || 0), 0);
 const zeroVol = () => Object.fromEntries(MGROUPS.map(m => [m.k, 0]));
 const maxOf = o => Math.max(0, ...Object.values(o));
@@ -205,11 +208,6 @@ function planVolume() {
   const acc = zeroVol();
   DAYS.forEach(d => ((S.plan[d.k] || {}).exercises || []).forEach(e => addVol(acc, e.name, exVol(e.sets))));
   return acc;
-}
-function heatFrom(vol) {
-  const mx = maxOf(vol), h = {};
-  if (mx) for (const k in vol) if (vol[k] > 0) h[k] = Math.max(1, Math.ceil(vol[k] / mx * 5));
-  return h;
 }
 function fmtVol(kg) {
   const v = S.settings.units === 'lbs' ? kg * 2.20462 : kg;
@@ -234,7 +232,6 @@ function rangeTabs(cur, fn) {
   return `<div class="chart-range" role="group" aria-label="Periodo">${RANGES.map(r => `<button class="${cur === r.k ? 'on' : ''}" aria-pressed="${cur === r.k}" onclick="${fn}('${r.k}')">${r.l}</button>`).join('')}</div>`;
 }
 function setRadarRange(k) { radarRange = k; if (k === 'all') radarPlan = false; renderStats(); }
-function setHomeRange(k) { homeRange = k; refreshHomeMap(); }
 function radarCard() {
   const real = muscleVolume(radarRange), usePlan = radarPlan && radarRange !== 'all';
   let plan = null;
@@ -262,14 +259,6 @@ function rankCard() {
   const rows = MGROUPS.filter(m => vol[m.k] > 0).sort((a, b) => vol[b.k] - vol[a.k]);
   return `<div class="records-card"><h3>Ranking por volumen</h3>${rows.length ? rows.map((m, i) => `<div class="rk"><span class="rk-ico" aria-hidden="true">${m.emoji}</span><div><div class="rk-top"><span>${m.label}</span><b>${fmtVol(vol[m.k])}</b></div><div class="rk-bar"><i style="--w:${(vol[m.k] / mx * 100).toFixed(1)}%;--i:${i};--c:${m.color}"></i></div></div><span class="rk-pct">${Math.round(vol[m.k] / tot * 100)}%</span></div>`).join('') : '<div class="empty" style="margin:0"><strong>Aún sin ranking</strong><span>Se ordena por kg × reps de cada músculo.</span></div>'}</div>`;
 }
-function homeMapInner() {
-  const heat = heatFrom(muscleVolume(homeRange)), has = Object.keys(heat).length;
-  return `<div class="map-hd"><h3>Músculos trabajados</h3>${rangeTabs(homeRange, 'setHomeRange')}</div>
-    <div class="map-svg-box">${muscleSVG(mapSide, heat)}</div>
-    <div class="map-foot"><div class="map-tog"><button class="${mapSide === 'front' ? 'on' : ''}" onclick="mapSide='front';refreshHomeMap()">Frente</button><button class="${mapSide === 'back' ? 'on' : ''}" onclick="mapSide='back';refreshHomeMap()">Espalda</button></div><div class="ramp"><span>Menos</span><i></i><span>Más</span></div></div>
-    <p class="hint" style="text-align:center;margin:8px 0 0">${has ? 'Toca un músculo para resaltarlo.' : 'Registra un entrenamiento y el mapa se iluminará.'}</p>`;
-}
-function refreshHomeMap() { const el = $('#hmap'); if (el) el.innerHTML = homeMapInner(); }
 function animateRadar() {
   const rp = $('#radar-real'); if (!rp) return;
   const pl = $('#radar-plan'), v = JSON.parse(rp.dataset.vals), mx = +rp.dataset.max, pv = pl && JSON.parse(pl.dataset.vals);
@@ -448,8 +437,6 @@ function renderHome() {
     ${homeStats(streak)}
     ${homeRecent()}
 
-    <div class="home-card" id="hmap">${homeMapInner()}</div>
-
     <div class="home-card">
       <h3>Actividad del año</h3>
       <div class="heat-wrap"><div class="heat-grid">
@@ -537,6 +524,7 @@ function renderWeek() {
 function openDay(key) {
   clearTimeout(dayCloseTimer);
   openDayKey = key;
+  dayRadarCur = null;
   const sc = $('#day-screen'), body = $('#day-body');
   sc.hidden = false;
   body.classList.add('stagger');
@@ -550,6 +538,7 @@ function closeDay() {
   const sc = $('#day-screen');
   if (!sc || sc.hidden) return;
   openDayKey = null;
+  cancelAnimationFrame(dayRadarRaf); dayRadarCur = null;
   sc.classList.remove('show');
   dayCloseTimer = setTimeout(() => { sc.hidden = true; }, 300);
   renderWeek();
@@ -558,8 +547,7 @@ function closeDay() {
 function renderDayScreen() {
   const key = openDayKey;
   if (!key) return;
-  const d = DAYS.find(x => x.k === key), day = ensureDay(key);
-  const names = [...new Set([...allExercises().map(e => e.name), ...S.logs.flatMap(l => l.entries.map(e => e.name))])];
+  const d = DAYS.find(x => x.k === key), day = ensureDay(key), n = day.exercises.length;
   const sc = $('#day-scroll'), top = sc.scrollTop;
   $('#day-name').textContent = d.n;
   $('#day-today').hidden = key !== getTodayKey();
@@ -568,18 +556,14 @@ function renderDayScreen() {
       <input class="inp l" placeholder="Nombre de la rutina (ej. Push, Piernas…)" maxlength="40"
         value="${esc(day.title)}" oninput="setDayTitle('${key}', this.value)">
     </div>
-    ${day.exercises.length
+    ${n
       ? day.exercises.map((e, i) => `<div class="dx" style="--i:${i}">${planExCard(key, e, i)}</div>`).join('')
       : '<div class="empty dx" style="--i:0"><strong>Día libre</strong><span>Aún no hay ejercicios para este día.</span></div>'}
-    <div class="addx dx" style="--i:${day.exercises.length}">
-      <input class="inp l" id="nx-${key}" list="exlist-plan" placeholder="Nombre del ejercicio" maxlength="40"
-        onkeydown="if(event.key==='Enter')addPlanEx('${key}')">
-    </div>
-    <button class="btn g dx" style="--i:${day.exercises.length + 1}" onclick="addPlanEx('${key}')">+ Agregar ejercicio</button>
-    <button class="btn dx" style="--i:${day.exercises.length + 2};margin-top:var(--sp-2)" onclick="openManualModal()">+ Añadir ejercicio a mano</button>
-    <datalist id="exlist-plan">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>`;
+    <button class="btn dx" style="--i:${n + 1}" onclick="openManualModal()">+ Añadir ejercicio a mano</button>`;
   sc.scrollTop = top;
+  renderDayRadar();
 }
+
 function setDayTitle(key, val) { ensureDay(key).title = val; saveLogs(); }
 function planExCard(key, e, i) {
   let h = `<div class="pex"><div class="pex-h"><h3><button type="button" class="pex-name" data-ex="${esc(e.name)}" onclick="openExProgress(this.dataset.ex)">${esc(e.name)} <span aria-hidden="true">›</span></button></h3>
@@ -598,21 +582,9 @@ function planExCard(key, e, i) {
   });
   return h + `<div class="rowb" style="margin-top:8px"><button class="btn g" onclick="addPlanSet('${key}',${i})">+ Serie</button></div></div>`;
 }
-function addPlanEx(key) {
-  const inp = $(`#nx-${key}`);
-  const n = (inp ? inp.value : '').trim();
-  if (!n) return;
-  const day = ensureDay(key);
-  const last = lastSets(n);
-  const sets = last && last.length ? last.map(s => ({ kg: s.kg || '', reps: s.reps || '' })) : [{ kg: '', reps: '' }, { kg: '', reps: '' }, { kg: '', reps: '' }];
-  day.exercises.push({ name: n, rest: 90, sets });
-  day._open = true;
-  saveLogs();
-  renderWeek();
-}
 function rmPlanEx(key, i) { if (!confirm('¿Quitar este ejercicio del día?')) return; ensureDay(key).exercises.splice(i, 1); saveLogs(); renderWeek(); }
 function setPlanRest(key, i, v) { ensureDay(key).exercises[i].rest = parseInt(v) || 90; saveLogs(); }
-function setPlanSet(key, i, j, field, val) { ensureDay(key).exercises[i].sets[j][field] = val; saveLogs(); }
+function setPlanSet(key, i, j, field, val) { ensureDay(key).exercises[i].sets[j][field] = val; saveLogs(); if (openDayKey === key) renderDayRadar(); }
 function addPlanSet(key, i) {
   const sets = ensureDay(key).exercises[i].sets;
   const last = sets[sets.length - 1];
@@ -625,27 +597,107 @@ function rmPlanSet(key, i, j) {
   sets.splice(j, 1); saveLogs(); renderWeek();
 }
 
-/* ===== Paso 2: añadir ejercicio a mano ===== */
+/* ===== Radar de distribución por día ===== */
+const DR = [
+  { k: 'pecho', l: 'Pecho' }, { k: 'hombros', l: 'Hombros' }, { k: 'triceps', l: 'Tríceps' }, { k: 'biceps', l: 'Bíceps' },
+  { k: 'espalda', l: 'Espalda' }, { k: 'piernas', l: 'Piernas' }, { k: 'abdomen', l: 'Core' }
+];
+function armOf(n) {
+  if (/tricep|frances|skull|fondo|patada|pushdown/.test(n)) return 'tri';
+  if (/curl|bicep|martillo|predicador|concentrad/.test(n)) return 'bi';
+  if (/remo|row|jalon|dominada|pull|face/.test(n)) return 'bi';
+  if (/press|banca|militar|arnold|bench|flexion|push|extension/.test(n)) return 'tri';
+  return null;
+}
+function armShare(name) {
+  const ex = findEx(name), a = ex && ex.arm ? ex.arm : armOf(norm(name));
+  return a === 'tri' ? { tri: 1, bi: 0 } : a === 'bi' ? { tri: 0, bi: 1 } : { tri: .5, bi: .5 };
+}
+function dayRadarVals(day) {
+  const ex = (day && day.exercises) || [];
+  const useVol = ex.length > 0 && ex.every(e => exVol(e.sets) > 0);
+  const acc = Object.fromEntries(DR.map(r => [r.k, 0])), unknown = [];
+  ex.forEach(e => {
+    const m = getMuscles(e.name), load = useVol ? exVol(e.sets) : (e.sets || []).length;
+    if (!m.primary.length && !m.secondary.length) { unknown.push(e.name); return; }
+    const add = (k, w) => {
+      if (k === 'brazos') { const s = armShare(e.name); acc.triceps += w * s.tri; acc.biceps += w * s.bi; }
+      else if (k in acc) acc[k] += w;
+    };
+    m.primary.forEach(k => add(k, load));
+    m.secondary.forEach(k => { if (!m.primary.includes(k)) add(k, load / 2); });
+  });
+  return { vals: DR.map(r => acc[r.k]), useVol, unknown };
+}
+const dRadXY = (i, f) => { const a = -Math.PI / 2 + i * 2 * Math.PI / DR.length; return [160 + 95 * f * Math.cos(a), 140 + 95 * f * Math.sin(a)]; };
+function paintDayRadar(v) {
+  const poly = $('#drad-poly');
+  if (!poly) return;
+  poly.setAttribute('points', v.map((x, i) => dRadXY(i, x).map(n => n.toFixed(1)).join(',')).join(' '));
+  $$('.drad-dot').forEach((d, i) => { const [x, y] = dRadXY(i, v[i]); d.setAttribute('cx', x.toFixed(1)); d.setAttribute('cy', y.toFixed(1)); });
+}
+function renderDayRadar() {
+  const box = $('#day-radar');
+  if (!box || !openDayKey) return;
+  const day = ensureDay(openDayKey), { vals, useVol, unknown } = dayRadarVals(day), n = DR.length;
+  const total = vals.reduce((a, b) => a + b, 0);
+  cancelAnimationFrame(dayRadarRaf);
+  const note = unknown.length ? `<p class="hint" style="margin:10px 0 0">Sin clasificar: ${unknown.map(esc).join(', ')}. Al añadirlo a mano puedes elegir su grupo.</p>` : '';
+  if (!total) {
+    dayRadarCur = null;
+    box.innerHTML = `<div class="chart-card"><div class="chart-hd"><strong>Distribución de volumen</strong></div>
+      <div class="empty" style="margin:0"><strong>Radar vacío</strong><span>Añade ejercicios y el gráfico se deformará hacia los músculos que trabajes.</span></div>${note}</div>`;
+    return;
+  }
+  const mx = Math.max(...vals), target = vals.map(v => v / mx), top = vals.indexOf(mx);
+  const rings = [.25, .5, .75, 1].map(f => `<polygon class="radar-ring" points="${DR.map((r, i) => dRadXY(i, f).map(x => x.toFixed(1)).join(',')).join(' ')}"/>`).join('');
+  const axes = DR.map((r, i) => {
+    const [x, y] = dRadXY(i, 1), [lx, ly] = dRadXY(i, 1.22), c = Math.cos(-Math.PI / 2 + i * 2 * Math.PI / n);
+    return `<line class="radar-ring" x1="160" y1="140" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/><text class="radar-lbl${i === top ? ' hi' : ''}" x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="${c > .3 ? 'start' : c < -.3 ? 'end' : 'middle'}">${r.l}</text>`;
+  }).join('');
+  const dots = DR.map((r, i) => `<circle class="radar-dot drad-dot" r="4" cx="160" cy="140"${target[i] > 0 ? '' : ' style="display:none"'}/>`).join('');
+  const tags = DR.map((r, i) => ({ l: r.l, v: vals[i] })).filter(x => x.v > 0).sort((a, b) => b.v - a.v).slice(0, 4)
+    .map(x => `<span class="mtag p">${x.l} ${Math.round(x.v / total * 100)}%</span>`).join('');
+  box.innerHTML = `<div class="chart-card"><div class="chart-hd"><strong>Distribución de volumen</strong><span class="mu" style="font-size:.72rem">${useVol ? 'Por volumen (kg × reps)' : 'Por series'}</span></div>
+    <svg class="radar" viewBox="0 0 320 280" role="img" aria-label="Radar de distribución por grupo muscular">${rings}${axes}<polygon id="drad-poly" class="radar-real" points=""/>${dots}</svg>
+    <div class="muscle-tags mchips" style="justify-content:center">${tags}</div>${note}</div>`;
+  const from = dayRadarCur && dayRadarCur.length === n ? dayRadarCur : new Array(n).fill(0), t0 = performance.now(), dur = REDUCED ? 1 : 450;
+  (function f(now) {
+    const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+    const cur = target.map((t, i) => from[i] + (t - from[i]) * e);
+    dayRadarCur = cur; paintDayRadar(cur);
+    if (p < 1) dayRadarRaf = requestAnimationFrame(f);
+  })(t0);
+}
+
+/* ===== Añadir ejercicio a mano ===== */
+const MANUAL_CHIPS = [
+  { k: 'pecho', l: 'Pecho' }, { k: 'espalda', l: 'Espalda' }, { k: 'piernas', l: 'Piernas' }, { k: 'hombros', l: 'Hombros' },
+  { k: 'triceps', l: 'Tríceps' }, { k: 'biceps', l: 'Bíceps' }, { k: 'abdomen', l: 'Core' }
+];
+const manualPreset = k => k === 'triceps' ? { cat: 'brazos', primary: ['brazos'], secondary: [], arm: 'tri' }
+  : k === 'biceps' ? { cat: 'brazos', primary: ['brazos'], secondary: [], arm: 'bi' }
+  : { cat: k, primary: [k], secondary: [] };
 const hasKey = (n, k) => n === k || n.startsWith(k) || n.includes(' ' + k);
 function detectEx(name) {
   const n = norm(name);
   if (n.length < 3) return null;
   const ex = findEx(name);
-  if (ex) return { src: 'exact', cat: ex.cat, primary: ex.primary || [], secondary: ex.secondary || [], ref: ex.name };
+  if (ex) return { src: 'exact', cat: ex.cat, primary: ex.primary || [], secondary: ex.secondary || [], arm: ex.arm, ref: ex.name };
   let best = null;
   allExercises().forEach(e => {
     const en = norm(e.name);
     if (en.length < 4) return;
     if ((n.includes(en) || (n.length >= 5 && en.includes(n))) && (!best || en.length > norm(best.name).length)) best = e;
   });
-  if (best) return { src: 'lib', cat: best.cat, primary: [...(best.primary || [])], secondary: [...(best.secondary || [])], ref: best.name };
+  if (best) return { src: 'lib', cat: best.cat, primary: [...(best.primary || [])], secondary: [...(best.secondary || [])], arm: best.arm, ref: best.name };
   for (const [cat, keys] of DETECT_RULES) {
     if (!keys.some(k => hasKey(n, k))) continue;
     const sec = [];
     if (cat === 'pecho' && /press|banca|bench|fondos/.test(n)) sec.push('hombros', 'brazos');
     else if (cat === 'hombros' && /press|militar|arnold/.test(n)) sec.push('brazos');
     else if (cat === 'espalda' && /remo|row|dominada|jalon|pull/.test(n)) sec.push('brazos');
-    return { src: 'kw', cat, primary: [cat], secondary: sec };
+    return { src: 'kw', cat, primary: [cat], secondary: sec, arm: cat === 'brazos' ? (armOf(n) || undefined) : undefined };
   }
   return null;
 }
@@ -653,6 +705,8 @@ function openManualModal() {
   if (!openDayKey) return;
   manualCat = null;
   $('#man-name').value = '';
+  const names = [...new Set([...allExercises().map(e => e.name), ...S.logs.flatMap(l => (l.entries || []).map(e => e.name))])];
+  $('#exlist-man').innerHTML = names.map(n => `<option value="${esc(n)}">`).join('');
   renderManualChips(); onManualInput();
   $('#manual-modal').hidden = false;
   setTimeout(() => $('#man-name').focus(), 60);
@@ -660,17 +714,18 @@ function openManualModal() {
 function closeManualModal() { $('#manual-modal').hidden = true; }
 function renderManualChips() {
   $('#man-cat').innerHTML = `<button type="button" class="chip ${manualCat ? '' : 'on'}" onclick="setManualCat(null)">Auto</button>`
-    + MGROUPS.map(m => `<button type="button" class="chip ${manualCat === m.k ? 'on' : ''}" onclick="setManualCat('${m.k}')">${m.label}</button>`).join('');
+    + MANUAL_CHIPS.map(m => `<button type="button" class="chip ${manualCat === m.k ? 'on' : ''}" onclick="setManualCat('${m.k}')">${m.l}</button>`).join('');
 }
 function setManualCat(k) { manualCat = k; renderManualChips(); onManualInput(); }
 function onManualInput() {
   const el = $('#man-detect'), name = $('#man-name').value.trim();
   if (name.length < 3) { el.innerHTML = ''; return; }
-  if (manualCat) { el.innerHTML = `Se clasificará como <b>${MG[manualCat].label}</b>.`; return; }
-  const d = detectEx(name), lab = a => a.map(k => MG[k] ? MG[k].label : k).join(', ');
+  const lab = (a, arm) => a.map(k => k === 'brazos' && arm ? (arm === 'tri' ? 'Tríceps' : 'Bíceps') : (MG[k] ? (k === 'abdomen' ? 'Core' : MG[k].label) : k)).join(', ');
+  if (manualCat) { el.innerHTML = `Se clasificará como <b>${MANUAL_CHIPS.find(m => m.k === manualCat).l}</b>.`; return; }
+  const d = detectEx(name);
   if (!d) el.innerHTML = 'No pude clasificarlo: elige un grupo o añádelo sin clasificar.';
   else if (d.src === 'exact') el.innerHTML = `Ya existe en tu biblioteca: <b>${esc(d.ref)}</b>.`;
-  else el.innerHTML = `Detectado: <b>${lab(d.primary)}</b>${d.secondary.length ? ' · secundarios: ' + lab(d.secondary) : ''}`;
+  else el.innerHTML = `Detectado: <b>${lab(d.primary, d.arm)}</b>${d.secondary.length ? ' · secundarios: ' + lab(d.secondary) : ''}`;
 }
 function saveManualEx() {
   const key = openDayKey;
@@ -681,9 +736,12 @@ function saveManualEx() {
   if (day.exercises.some(x => norm(x.name) === norm(name))) { toast('Ese ejercicio ya está en este día'); return; }
   let classified = true;
   if (!existing) {
-    const d = manualCat ? { cat: manualCat, primary: [manualCat], secondary: [] } : detectEx(raw);
-    if (d) S.customEx.push({ name, cat: d.cat, primary: [...d.primary], secondary: (d.secondary || []).filter(k => !d.primary.includes(k)) });
-    else classified = false;
+    const d = manualCat ? manualPreset(manualCat) : detectEx(raw);
+    if (d) {
+      const rec = { name, cat: d.cat, primary: [...d.primary], secondary: (d.secondary || []).filter(k => !d.primary.includes(k)) };
+      if (d.arm) rec.arm = d.arm;
+      S.customEx.push(rec);
+    } else classified = false;
   }
   const last = lastSets(name);
   const sets = last && last.length ? last.map(s => ({ kg: s.kg || '', reps: s.reps || '' })) : [{ kg: '', reps: '' }, { kg: '', reps: '' }, { kg: '', reps: '' }];
@@ -695,7 +753,7 @@ function saveManualEx() {
   requestAnimationFrame(() => { const c = $$('#day-body .pex'); if (c.length) c[c.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' }); });
 }
 
-/* ===== Paso 3: progreso por ejercicio ===== */
+/* ===== Progreso por ejercicio ===== */
 function exHistory(name) {
   const n = norm(name), by = {};
   S.logs.forEach(l => (l.entries || []).forEach(e => {
@@ -850,25 +908,6 @@ function openStartModal() {
 function closeStartModal() { $('#start-modal').hidden = true; }
 function confirmStart() { closeStartModal(); startSess(true); show('train'); }
 
-/* ===== Mapa muscular ===== */
-function setMapSide(side) {
-  mapSide = side;
-  const box = $('#gal-map');
-  if (box) box.innerHTML = muscleSVG(mapSide, getSessionHeat());
-  $$('.map-tog button').forEach(b => {
-    const isFront = b.textContent.toLowerCase().includes('frente');
-    b.classList.toggle('on', (side === 'front' && isFront) || (side === 'back' && !isFront));
-  });
-  const mini = $('#train-map');
-  if (mini) mini.innerHTML = muscleSVG(mapSide, getSessionHeat());
-}
-
-function selectMuscle(k) {
-  selectedMuscle = selectedMuscle === k ? null : k;
-  toast(selectedMuscle ? 'Músculo: ' + (MG[k]?.label || k) : 'Selección quitada');
-  refreshHomeMap();
-}
-
 let customSel = { cat: 'pecho', pri: [], sec: [] };
 function openCustomModal() {
   customSel = { cat: 'pecho', pri: [], sec: [] };
@@ -900,104 +939,6 @@ function saveCustomEx() {
   saveLogs();
   closeCustomModal();
   if (openDayKey) renderDayScreen();
-}
-
-/* ===== SVG Mapa ===== */
-function muscleSVG(side, heat = {}) {
-  const cls = k => {
-    const h = heat[k] || 0;
-    let c = '';
-    if (h >= 5) c = 'hot5'; else if (h >= 4) c = 'hot4'; else if (h >= 3) c = 'hot3';
-    else if (h >= 2) c = 'hot2'; else if (h >= 1) c = 'hot1';
-    if (selectedMuscle === k) c += ' sel';
-    return c;
-  };
-  // Estilo MuscleWiki: silueta clara con contornos y relleno al trabajar
-  if (side === 'front') {
-    return `<svg viewBox="0 0 240 480" xmlns="http://www.w3.org/2000/svg">
-      <!-- Cabeza -->
-      <ellipse cx="120" cy="36" rx="28" ry="32" class="body-outline"/>
-      <!-- Cuello -->
-      <path d="M105 62 L105 78 L135 78 L135 62" class="body-outline"/>
-      <!-- Torso base -->
-      <path d="M88 78 L70 95 L58 140 L55 200 L62 250 L78 310 L95 330 L120 315 L145 330 L162 310 L178 250 L185 200 L182 140 L170 95 L152 78 Z" class="body-outline"/>
-      <!-- Pecho izq / der -->
-      <path d="M90 88 L118 82 L118 130 Q105 142 90 132 Z" class="m-region ${cls('pecho')}" data-m="pecho" onclick="selectMuscle('pecho')"/>
-      <path d="M122 82 L150 88 L150 132 Q135 142 122 130 Z" class="m-region ${cls('pecho')}" data-m="pecho" onclick="selectMuscle('pecho')"/>
-      <!-- Línea media pecho -->
-      <path d="M120 82 L120 145" class="body-line"/>
-      <!-- Hombros -->
-      <path d="M70 90 Q52 85 48 105 Q50 120 68 118 Q78 110 78 95 Z" class="m-region ${cls('hombros')}" data-m="hombros" onclick="selectMuscle('hombros')"/>
-      <path d="M170 90 Q188 85 192 105 Q190 120 172 118 Q162 110 162 95 Z" class="m-region ${cls('hombros')}" data-m="hombros" onclick="selectMuscle('hombros')"/>
-      <!-- Abdomen (6 pack stylized) -->
-      <path d="M95 148 L145 148 L142 200 L120 210 L98 200 Z" class="m-region ${cls('abdomen')}" data-m="abdomen" onclick="selectMuscle('abdomen')"/>
-      <path d="M100 152 L140 152 M100 168 L140 168 M100 184 L140 184 M120 148 L120 200" class="body-line"/>
-      <!-- Brazos (bíceps) -->
-      <path d="M48 118 L38 160 L42 200 L58 202 L62 160 L68 120 Z" class="m-region ${cls('brazos')}" data-m="brazos" onclick="selectMuscle('brazos')"/>
-      <path d="M192 118 L202 160 L198 200 L182 202 L178 160 L172 120 Z" class="m-region ${cls('brazos')}" data-m="brazos" onclick="selectMuscle('brazos')"/>
-      <!-- Antebrazos -->
-      <path d="M42 202 L36 250 L52 255 L58 205 Z" class="body-outline"/>
-      <path d="M198 202 L204 250 L188 255 L182 205 Z" class="body-outline"/>
-      <!-- Manos -->
-      <ellipse cx="40" cy="262" rx="12" ry="10" class="body-outline"/>
-      <ellipse cx="200" cy="262" rx="12" ry="10" class="body-outline"/>
-      <!-- Piernas (cuádriceps) -->
-      <path d="M82 330 L72 400 L70 450 L95 455 L102 400 L108 335 Z" class="m-region ${cls('piernas')}" data-m="piernas" onclick="selectMuscle('piernas')"/>
-      <path d="M158 330 L168 400 L170 450 L145 455 L138 400 L132 335 Z" class="m-region ${cls('piernas')}" data-m="piernas" onclick="selectMuscle('piernas')"/>
-      <!-- Líneas cuádriceps -->
-      <path d="M88 350 L88 420 M95 345 L92 430 M152 350 L152 420 M145 345 L148 430" class="body-line"/>
-      <!-- Pies -->
-      <ellipse cx="80" cy="462" rx="18" ry="10" class="body-outline"/>
-      <ellipse cx="160" cy="462" rx="18" ry="10" class="body-outline"/>
-    </svg>`;
-  }
-  // BACK
-  return `<svg viewBox="0 0 240 480" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="120" cy="36" rx="28" ry="32" class="body-outline"/>
-    <path d="M105 62 L105 78 L135 78 L135 62" class="body-outline"/>
-    <path d="M88 78 L70 95 L58 140 L55 200 L62 250 L78 310 L95 330 L120 315 L145 330 L162 310 L178 250 L185 200 L182 140 L170 95 L152 78 Z" class="body-outline"/>
-    <!-- Trapecio / espalda alta -->
-    <path d="M90 82 L120 75 L150 82 L148 115 Q120 128 92 115 Z" class="m-region ${cls('espalda')}" data-m="espalda" onclick="selectMuscle('espalda')"/>
-    <!-- Dorsales -->
-    <path d="M88 118 L60 160 L62 220 L90 230 Q95 170 100 130 Z" class="m-region ${cls('espalda')}" data-m="espalda" onclick="selectMuscle('espalda')"/>
-    <path d="M152 118 L180 160 L178 220 L150 230 Q145 170 140 130 Z" class="m-region ${cls('espalda')}" data-m="espalda" onclick="selectMuscle('espalda')"/>
-    <!-- Lumbar -->
-    <path d="M95 220 L145 220 L142 280 L120 290 L98 280 Z" class="m-region ${cls('espalda')}" data-m="espalda" onclick="selectMuscle('espalda')"/>
-    <path d="M120 75 L120 280" class="body-line"/>
-    <!-- Hombros rear -->
-    <path d="M70 90 Q52 85 48 105 Q50 120 68 118 Q78 110 78 95 Z" class="m-region ${cls('hombros')}" data-m="hombros" onclick="selectMuscle('hombros')"/>
-    <path d="M170 90 Q188 85 192 105 Q190 120 172 118 Q162 110 162 95 Z" class="m-region ${cls('hombros')}" data-m="hombros" onclick="selectMuscle('hombros')"/>
-    <!-- Tríceps -->
-    <path d="M48 118 L38 160 L42 200 L58 202 L62 160 L68 120 Z" class="m-region ${cls('brazos')}" data-m="brazos" onclick="selectMuscle('brazos')"/>
-    <path d="M192 118 L202 160 L198 200 L182 202 L178 160 L172 120 Z" class="m-region ${cls('brazos')}" data-m="brazos" onclick="selectMuscle('brazos')"/>
-    <path d="M42 202 L36 250 L52 255 L58 205 Z" class="body-outline"/>
-    <path d="M198 202 L204 250 L188 255 L182 205 Z" class="body-outline"/>
-    <ellipse cx="40" cy="262" rx="12" ry="10" class="body-outline"/>
-    <ellipse cx="200" cy="262" rx="12" ry="10" class="body-outline"/>
-    <!-- Glúteos + isquios -->
-    <path d="M85 320 Q120 305 155 320 L160 360 Q120 380 80 360 Z" class="m-region ${cls('piernas')}" data-m="piernas" onclick="selectMuscle('piernas')"/>
-    <path d="M82 360 L72 420 L70 450 L95 455 L105 400 L108 365 Z" class="m-region ${cls('piernas')}" data-m="piernas" onclick="selectMuscle('piernas')"/>
-    <path d="M158 360 L168 420 L170 450 L145 455 L135 400 L132 365 Z" class="m-region ${cls('piernas')}" data-m="piernas" onclick="selectMuscle('piernas')"/>
-    <ellipse cx="80" cy="462" rx="18" ry="10" class="body-outline"/>
-    <ellipse cx="160" cy="462" rx="18" ry="10" class="body-outline"/>
-  </svg>`;
-}
-
-function getSessionHeat() {
-  const heat = {};
-  if (!ss) return heat;
-  ss.entries.forEach(e => {
-    const done = e.sets.filter(s => s.done && s.t !== 'W').length;
-    if (!done) return;
-    const { primary, secondary } = getMuscles(e.name);
-    primary.forEach(k => { heat[k] = Math.min(5, (heat[k] || 0) + done); });
-    secondary.forEach(k => { heat[k] = Math.min(5, (heat[k] || 0) + Math.ceil(done / 2)); });
-  });
-  return heat;
-}
-function updateTrainMap() {
-  const box = $('#train-map');
-  if (box) box.innerHTML = muscleSVG(mapSide, getSessionHeat());
 }
 
 /* ===== Paso 5: Estadísticas ===== */
@@ -1353,17 +1294,7 @@ function renderTrain() {
   }
   let h = `<div class="sh"><button class="x" onclick="show('home')" aria-label="Minimizar entrenamiento">⌄</button><input class="ttl" value="${esc(ss.title)}" maxlength="40" oninput="ss.title=this.value;saveS()">
   <span class="clk" id="g-time">00:00</span><button class="btn fin" onclick="finish()">Finalizar</button></div>`;
-  h += `<div class="map-mini">
-    <div class="map-hd">
-      <strong>Trabajo muscular de la sesión</strong>
-      <div class="map-tog">
-        <button class="${mapSide === 'front' ? 'on' : ''}" onclick="setMapSide('front')">Frente</button>
-        <button class="${mapSide === 'back' ? 'on' : ''}" onclick="setMapSide('back')">Espalda</button>
-      </div>
-    </div>
-    <div class="map-svg-box" id="train-map">${muscleSVG(mapSide, getSessionHeat())}</div>
-  </div>`;
-  if (!ss.entries.length) h += `<div class="empty"><strong>Sesión vacía</strong><span>Agrega tu primer ejercicio abajo.</span></div>`;
+    if (!ss.entries.length) h += `<div class="empty"><strong>Sesión vacía</strong><span>Agrega tu primer ejercicio abajo.</span></div>`;
   ss.entries.forEach((e, i) => h += exCard(e, i));
   h += `${dl}<div class="addx"><input class="inp l" id="nx" list="exlist" placeholder="Nombre del ejercicio" maxlength="40" onkeydown="if(event.key==='Enter')addEx()"></div>
  <button class="btn" onclick="addEx()">+ Agregar ejercicio</button><div style="height:110px"></div>
@@ -1439,7 +1370,6 @@ function tick(i, j, b) {
   $('#sum-' + i).innerHTML = sumHTML(e);
   if (s.done && e.rest > 0) startRest(e.rest);
   saveS();
-  updateTrainMap();
 }
 function finish() {
   const ent = ss.entries
