@@ -581,11 +581,21 @@ function renderHome() {
       </div>
     </div>
 
-    <div class="home-card">
+    <div class="home-card cal-card">
       <div class="cal-hd">
-        <strong>${monthNames[calMonth]} ${calYear}</strong>
+        <strong>${monthNames[calMonth]}</strong>
         <div class="cal-nav">
           <button type="button" onclick="shiftCal(-1)" aria-label="Mes anterior">‹</button>
+          <select class="cal-year" aria-label="Año" onchange="setCalYear(+this.value)">
+            ${(() => {
+              const yNow = new Date().getFullYear();
+              const yMin = Math.min(calYear, yNow - 4);
+              const yMax = Math.max(calYear, yNow + 1);
+              let opts = '';
+              for (let y = yMax; y >= yMin; y--) opts += '<option value="' + y + '"' + (y === calYear ? ' selected' : '') + '>' + y + '</option>';
+              return opts;
+            })()}
+          </select>
           <button type="button" onclick="shiftCal(1)" aria-label="Mes siguiente">›</button>
         </div>
       </div>
@@ -604,6 +614,11 @@ function shiftCal(dir) {
   calMonth += dir;
   if (calMonth < 0) { calMonth = 11; calYear--; }
   if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderHome();
+}
+function setCalYear(y) {
+  if (!Number.isFinite(y)) return;
+  calYear = y;
   renderHome();
 }
 
