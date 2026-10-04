@@ -5,6 +5,16 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = s => { s = Math.max(0, Math.floor(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return (h ? h + ':' : '') + String(m).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
 const num = v => parseFloat(String(v).replace(',', '.')) || 0;
+const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DETECT_RULES = [
+  ['hombros', ['press militar','militar','hombro','elevacion lateral','elevaciones lateral','lateral raise','elevacion frontal','elevaciones frontal','pajaro','rear delt','arnold','encogimiento','shrug','deltoid','overhead press']],
+  ['abdomen', ['crunch','plancha','plank','abdom','core','twist','ab wheel','rueda abdominal','elevacion de pierna','elevaciones de pierna','sit up','situp','oblicu','hollow','mountain climber']],
+  ['piernas', ['sentadilla','squat','prensa','zancada','lunge','pierna','gemelo','pantorrilla','femoral','cuadricep','gluteo','hip thrust','rumano','isquio','aductor','abductor','step up','hack','calf']],
+  ['brazos',  ['curl','bicep','tricep','martillo','frances','predicador','antebrazo','skull','patada de tricep']],
+  ['espalda', ['remo','dominada','jalon','peso muerto','espalda','pulldown','pull down','pull up','pullup','lumbar','hiperextension','dorsal','trapecio','row','deadlift']],
+  ['pecho',   ['pecho','banca','press','apertura','fondos','crossover','cruce','pec deck','flexion','push up','pushup','fly','bench','chest']]
+];
 const dkey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 
 /* ===== Datos ===== */
@@ -31,6 +41,7 @@ const saveLogs = () => { try { localStorage.setItem('gt', JSON.stringify(S)); } 
 let R = { end: 0, fin: false }, AC = null, wl = null;
 let mapSide = 'front', chartDays = 30;
 let openDayKey = null, dayCloseTimer = null;
+let exName = null, exCal = { y: 0, m: 0 }, exCloseTimer = null, manualCat = null;
 let calYear = new Date().getFullYear(), calMonth = new Date().getMonth(); // 0-11
 let selectedMuscle = null;
 
@@ -321,6 +332,7 @@ function homeRecent() {
 function show(name) {
   if (!VIEWS.includes(name)) name = 'home';
   if (name !== 'programs' && openDayKey) closeDay();
+  if (exName) closeExProgress(true);
   document.body.classList.toggle('in-train', name === 'train');
   $$('.view').forEach(v => (v.hidden = v.dataset.view !== name));
   $$('.nav-btn').forEach(b => {
@@ -490,7 +502,7 @@ function showDayLog(dateStr) {
       <ul style="margin:6px 0 0;padding:0 0 0 18px;color:var(--mu);font-size:.85rem">`;
     (l.entries || []).forEach(e => {
       const sets = (e.sets || []).map(s => `${fmtWeight(s.kg)}×${s.reps}`).join(', ');
-      html += `<li>${esc(e.name)}: ${sets || '—'}</li>`;
+      html += `<li><button type="button" class="lnk" data-ex="${esc(e.name)}" onclick="closeLogModal();openExProgress(this.dataset.ex)">${esc(e.name)}</button>: ${sets || '—'}</li>`;
     });
     html += `</ul>${muscleChips({ exercises: l.entries })}</div>`;
   });
@@ -564,12 +576,13 @@ function renderDayScreen() {
         onkeydown="if(event.key==='Enter')addPlanEx('${key}')">
     </div>
     <button class="btn g dx" style="--i:${day.exercises.length + 1}" onclick="addPlanEx('${key}')">+ Agregar ejercicio</button>
+    <button class="btn dx" style="--i:${day.exercises.length + 2};margin-top:var(--sp-2)" onclick="openManualModal()">+ Añadir ejercicio a mano</button>
     <datalist id="exlist-plan">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>`;
   sc.scrollTop = top;
 }
 function setDayTitle(key, val) { ensureDay(key).title = val; saveLogs(); }
 function planExCard(key, e, i) {
-  let h = `<div class="pex"><div class="pex-h"><h3>${esc(e.name)}</h3>
+  let h = `<div class="pex"><div class="pex-h"><h3><button type="button" class="pex-name" data-ex="${esc(e.name)}" onclick="openExProgress(this.dataset.ex)">${esc(e.name)} <span aria-hidden="true">›</span></button></h3>
     <span class="mu">⏱</span>
     <input class="inp" inputmode="numeric" value="${e.rest || 90}" style="width:52px;padding:6px 2px"
       oninput="setPlanRest('${key}',${i},this.value)"><span class="mu">s</span>
@@ -610,6 +623,206 @@ function rmPlanSet(key, i, j) {
   const sets = ensureDay(key).exercises[i].sets;
   if (sets.length <= 1) return;
   sets.splice(j, 1); saveLogs(); renderWeek();
+}
+
+/* ===== Paso 2: añadir ejercicio a mano ===== */
+const hasKey = (n, k) => n === k || n.startsWith(k) || n.includes(' ' + k);
+function detectEx(name) {
+  const n = norm(name);
+  if (n.length < 3) return null;
+  const ex = findEx(name);
+  if (ex) return { src: 'exact', cat: ex.cat, primary: ex.primary || [], secondary: ex.secondary || [], ref: ex.name };
+  let best = null;
+  allExercises().forEach(e => {
+    const en = norm(e.name);
+    if (en.length < 4) return;
+    if ((n.includes(en) || (n.length >= 5 && en.includes(n))) && (!best || en.length > norm(best.name).length)) best = e;
+  });
+  if (best) return { src: 'lib', cat: best.cat, primary: [...(best.primary || [])], secondary: [...(best.secondary || [])], ref: best.name };
+  for (const [cat, keys] of DETECT_RULES) {
+    if (!keys.some(k => hasKey(n, k))) continue;
+    const sec = [];
+    if (cat === 'pecho' && /press|banca|bench|fondos/.test(n)) sec.push('hombros', 'brazos');
+    else if (cat === 'hombros' && /press|militar|arnold/.test(n)) sec.push('brazos');
+    else if (cat === 'espalda' && /remo|row|dominada|jalon|pull/.test(n)) sec.push('brazos');
+    return { src: 'kw', cat, primary: [cat], secondary: sec };
+  }
+  return null;
+}
+function openManualModal() {
+  if (!openDayKey) return;
+  manualCat = null;
+  $('#man-name').value = '';
+  renderManualChips(); onManualInput();
+  $('#manual-modal').hidden = false;
+  setTimeout(() => $('#man-name').focus(), 60);
+}
+function closeManualModal() { $('#manual-modal').hidden = true; }
+function renderManualChips() {
+  $('#man-cat').innerHTML = `<button type="button" class="chip ${manualCat ? '' : 'on'}" onclick="setManualCat(null)">Auto</button>`
+    + MGROUPS.map(m => `<button type="button" class="chip ${manualCat === m.k ? 'on' : ''}" onclick="setManualCat('${m.k}')">${m.label}</button>`).join('');
+}
+function setManualCat(k) { manualCat = k; renderManualChips(); onManualInput(); }
+function onManualInput() {
+  const el = $('#man-detect'), name = $('#man-name').value.trim();
+  if (name.length < 3) { el.innerHTML = ''; return; }
+  if (manualCat) { el.innerHTML = `Se clasificará como <b>${MG[manualCat].label}</b>.`; return; }
+  const d = detectEx(name), lab = a => a.map(k => MG[k] ? MG[k].label : k).join(', ');
+  if (!d) el.innerHTML = 'No pude clasificarlo: elige un grupo o añádelo sin clasificar.';
+  else if (d.src === 'exact') el.innerHTML = `Ya existe en tu biblioteca: <b>${esc(d.ref)}</b>.`;
+  else el.innerHTML = `Detectado: <b>${lab(d.primary)}</b>${d.secondary.length ? ' · secundarios: ' + lab(d.secondary) : ''}`;
+}
+function saveManualEx() {
+  const key = openDayKey;
+  if (!key) return;
+  const raw = $('#man-name').value.replace(/\s+/g, ' ').trim();
+  if (!raw) { toast('Escribe un nombre'); return; }
+  const existing = findEx(raw), name = existing ? existing.name : raw, day = ensureDay(key);
+  if (day.exercises.some(x => norm(x.name) === norm(name))) { toast('Ese ejercicio ya está en este día'); return; }
+  let classified = true;
+  if (!existing) {
+    const d = manualCat ? { cat: manualCat, primary: [manualCat], secondary: [] } : detectEx(raw);
+    if (d) S.customEx.push({ name, cat: d.cat, primary: [...d.primary], secondary: (d.secondary || []).filter(k => !d.primary.includes(k)) });
+    else classified = false;
+  }
+  const last = lastSets(name);
+  const sets = last && last.length ? last.map(s => ({ kg: s.kg || '', reps: s.reps || '' })) : [{ kg: '', reps: '' }, { kg: '', reps: '' }, { kg: '', reps: '' }];
+  day.exercises.push({ name, rest: 90, sets });
+  saveLogs();
+  closeManualModal();
+  renderWeek();
+  toast(classified ? 'Ejercicio añadido' : 'Añadido sin clasificar');
+  requestAnimationFrame(() => { const c = $$('#day-body .pex'); if (c.length) c[c.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+}
+
+/* ===== Paso 3: progreso por ejercicio ===== */
+function exHistory(name) {
+  const n = norm(name), by = {};
+  S.logs.forEach(l => (l.entries || []).forEach(e => {
+    if (norm(e.name) !== n || !(e.sets || []).length) return;
+    const o = by[l.date] || (by[l.date] = { date: l.date, kg: 0, vol: 0 });
+    o.kg = Math.max(o.kg, ...e.sets.map(s => num(s.kg)));
+    o.vol += exVol(e.sets);
+  }));
+  const arr = Object.values(by).sort((a, b) => a.date.localeCompare(b.date));
+  let best = 0;
+  arr.forEach((p, i) => { p.pr = i > 0 && p.kg > best; best = Math.max(best, p.kg); });
+  return arr;
+}
+function smoothPath(pts) {
+  const n = pts.length, dx = [], m = [], t = [];
+  for (let i = 0; i < n - 1; i++) { dx[i] = pts[i + 1].x - pts[i].x; m[i] = (pts[i + 1].y - pts[i].y) / dx[i]; }
+  t[0] = m[0]; t[n - 1] = m[n - 2];
+  for (let i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+  for (let i = 0; i < n - 1; i++) {
+    if (m[i] === 0) { t[i] = t[i + 1] = 0; continue; }
+    const a = t[i] / m[i], b = t[i + 1] / m[i], s = a * a + b * b;
+    if (s > 9) { const k = 3 / Math.sqrt(s); t[i] = k * a * m[i]; t[i + 1] = k * b * m[i]; }
+  }
+  let d = `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const p = pts[i], q = pts[i + 1], w = dx[i] / 3;
+    d += ` C${(p.x + w).toFixed(1)},${(p.y + t[i] * w).toFixed(1)} ${(q.x - w).toFixed(1)},${(q.y - t[i + 1] * w).toFixed(1)} ${q.x.toFixed(1)},${q.y.toFixed(1)}`;
+  }
+  return d;
+}
+function exChartSVG(hist) {
+  const h = hist.slice(-30);
+  if (!h.length || !h.some(p => p.kg > 0)) return '<div class="chart-empty">Aún no hay series con peso registrado para este ejercicio.</div>';
+  const W = 320, H = 190, L = 38, R = 14, T = 24, B = 26, iw = W - L - R, ih = H - T - B;
+  const lo = Math.min(...h.map(p => p.kg)), hi = Math.max(...h.map(p => p.kg));
+  const pad = (hi - lo) * 0.2 || hi * 0.15 || 1, y0 = Math.max(0, lo - pad), y1 = hi + pad;
+  const X = i => h.length === 1 ? L + iw / 2 : L + i / (h.length - 1) * iw;
+  const Y = v => T + ih - (v - y0) / (y1 - y0) * ih;
+  const dec = (y1 - y0) < 8 ? 1 : 0;
+  const grid = [0, 1, 2, 3].map(i => {
+    const v = y0 + (y1 - y0) * i / 3, y = Y(v).toFixed(1);
+    return `<line class="ex-gl" x1="${L}" x2="${W - R}" y1="${y}" y2="${y}"/><text class="ex-yl" x="${L - 6}" y="${(+y + 3).toFixed(1)}" text-anchor="end">${toDisplay(v).toFixed(dec)}</text>`;
+  }).join('');
+  const pts = h.map((p, i) => ({ x: X(i), y: Y(p.kg) }));
+  const dl = s => new Date(s + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short' });
+  let curve = '';
+  if (h.length > 1) {
+    const line = smoothPath(pts);
+    curve = `<path class="ex-area" d="${line} L${pts[pts.length - 1].x.toFixed(1)},${T + ih} L${pts[0].x.toFixed(1)},${T + ih} Z" fill="url(#exg)"/><path class="ex-line" pathLength="1" d="${line}"/>`;
+  }
+  const dots = h.map((p, i) => {
+    const q = pts[i], tip = `<title>${dl(p.date)} · ${fmtWeight(p.kg)}${p.pr ? ' · PR' : ''}</title>`;
+    return p.pr
+      ? `<g>${tip}<circle class="ex-ring" cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="9"/><circle class="ex-dot pr" cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="5"/><text class="ex-prl" x="${q.x.toFixed(1)}" y="${(q.y - 13).toFixed(1)}">PR</text></g>`
+      : `<g>${tip}<circle class="ex-dot" cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="3.5"/></g>`;
+  }).join('');
+  const xl = h.length === 1
+    ? `<text class="ex-yl" x="${X(0)}" y="${H - 6}" text-anchor="middle">${dl(h[0].date)}</text>`
+    : `<text class="ex-yl" x="${L}" y="${H - 6}" text-anchor="start">${dl(h[0].date)}</text><text class="ex-yl" x="${W - R}" y="${H - 6}" text-anchor="end">${dl(h[h.length - 1].date)}</text>`;
+  return `<svg class="ex-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Progresión de peso por sesión">
+    <defs><linearGradient id="exg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--ac)" stop-opacity=".3"/><stop offset="100%" stop-color="var(--ac)" stop-opacity="0"/></linearGradient></defs>
+    ${grid}${curve}${dots}${xl}</svg>`;
+}
+function exCalInner(hist) {
+  const map = Object.fromEntries(hist.map(p => [p.date, p]));
+  const { y, m } = exCal, start = new Date(y, m, 1).getDay(), dim = new Date(y, m + 1, 0).getDate();
+  const total = Math.ceil((start + dim) / 7) * 7, today = dkey(new Date());
+  let cells = '', nTrain = 0, nPR = 0;
+  for (let i = 0; i < total; i++) {
+    const dt = new Date(y, m, 1 - start + i), key = dkey(dt), inM = dt.getMonth() === m, p = map[key];
+    if (p && inM) { nTrain++; if (p.pr) nPR++; }
+    const cls = 'nc' + (inM ? '' : ' out') + (p ? ' did' : '') + (p && p.pr ? ' pr' : '') + (key === today ? ' today' : '');
+    const inner = `<span class="nd">${dt.getDate()}</span>` + (p ? `<span class="nv">${p.kg > 0 ? +toDisplay(p.kg).toFixed(1) : '✓'}</span>` : '') + (p && p.pr ? '<span class="npr">PR</span>' : '');
+    cells += p ? `<button type="button" class="${cls}" onclick="showDayLog('${key}')" aria-label="${key}${p.pr ? ', récord personal' : ''}">${inner}</button>` : `<div class="${cls}">${inner}</div>`;
+  }
+  return `<div class="cal-hd"><strong>${MESES[m]} ${y}</strong><div class="cal-nav">
+      <button type="button" onclick="shiftExCal(-1)" aria-label="Mes anterior">‹</button>
+      <button type="button" onclick="shiftExCal(1)" aria-label="Mes siguiente">›</button></div></div>
+    <div class="ncal">${['D', 'L', 'M', 'X', 'J', 'V', 'S'].map(x => `<div class="ncal-dow">${x}</div>`).join('')}${cells}</div>
+    <div class="ncal-foot"><span>${nTrain} día${nTrain !== 1 ? 's' : ''} este mes · ${nPR} PR</span><span class="ncal-leg"><i></i>Entrenado <i class="pr"></i>PR</span></div>`;
+}
+function shiftExCal(dir) {
+  exCal.m += dir;
+  if (exCal.m < 0) { exCal.m = 11; exCal.y--; }
+  if (exCal.m > 11) { exCal.m = 0; exCal.y++; }
+  const el = $('#ex-cal');
+  if (el && exName) el.innerHTML = exCalInner(exHistory(exName));
+}
+function renderExProgress() {
+  if (!exName) return;
+  const hist = exHistory(exName), mu = getMuscles(exName);
+  const tags = [...mu.primary.map(k => `<span class="mtag p">${MG[k] ? MG[k].label : k}</span>`), ...mu.secondary.map(k => `<span class="mtag s">${MG[k] ? MG[k].label : k}</span>`)].join('');
+  const best = hist.length ? Math.max(...hist.map(p => p.kg)) : 0, nPR = hist.filter(p => p.pr).length;
+  const gain = hist.length > 1 ? hist[hist.length - 1].kg - hist[0].kg : null;
+  $('#ex-body').innerHTML = `
+    ${tags ? `<div class="muscle-tags">${tags}</div>` : ''}
+    <div class="ex-kpis">
+      <div class="ex-kpi pr"><b>${best > 0 ? fmtWeight(best) : '—'}</b><span>Récord</span></div>
+      <div class="ex-kpi"><b>${hist.length}</b><span>Sesiones</span></div>
+      <div class="ex-kpi"><b>${gain === null ? '—' : (gain > 0 ? '+' : '') + fmtWeight(gain)}</b><span>Mejora total${nPR ? ' · ' + nPR + ' PR' : ''}</span></div>
+    </div>
+    <div class="chart-card" style="margin-bottom:var(--sp-3)">
+      <div class="chart-hd"><strong>Progresión de peso</strong><span class="mu" style="font-size:.72rem">${unitLabel()} · máx. por sesión</span></div>
+      ${exChartSVG(hist)}
+    </div>
+    <div class="home-card"><div id="ex-cal">${exCalInner(hist)}</div></div>`;
+}
+function openExProgress(name) {
+  if (!name) return;
+  clearTimeout(exCloseTimer);
+  exName = name;
+  const hist = exHistory(name), ref = hist.length ? new Date(hist[hist.length - 1].date + 'T12:00:00') : new Date();
+  exCal = { y: ref.getFullYear(), m: ref.getMonth() };
+  const sc = $('#ex-screen');
+  sc.hidden = false;
+  $('#ex-title').textContent = name;
+  renderExProgress();
+  $('#ex-scroll').scrollTop = 0;
+  requestAnimationFrame(() => requestAnimationFrame(() => sc.classList.add('show')));
+}
+function closeExProgress(now) {
+  if (!exName) return;
+  exName = null;
+  const sc = $('#ex-screen');
+  sc.classList.remove('show');
+  if (now === true) sc.hidden = true;
+  else exCloseTimer = setTimeout(() => { sc.hidden = true; }, 300);
 }
 
 /* ===== Modal inicio ===== */
@@ -924,7 +1137,7 @@ function renderStats() {
       <h3>Récords personales</h3>
       ${Object.keys(maxByEx).length
         ? Object.entries(maxByEx).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name, kg]) =>
-            `<div class="rec-row"><span class="name">${esc(name)}</span><span class="val">${fmtWeight(kg)}</span></div>`
+            `<button type="button" class="rec-row rec-link" data-ex="${esc(name)}" onclick="openExProgress(this.dataset.ex)"><span class="name">${esc(name)}</span><span class="val">${fmtWeight(kg)}</span></button>`
           ).join('')
         : '<p class="mu" style="font-size:.85rem;text-align:center">Completa entrenamientos para ver récords</p>'}
     </div>
@@ -1318,12 +1531,14 @@ $('#start-modal').addEventListener('click', e => { if (e.target.id === 'start-mo
 $('#custom-modal').addEventListener('click', e => { if (e.target.id === 'custom-modal') closeCustomModal(); });
 $('#goal-modal').addEventListener('click', e => { if (e.target.id === 'goal-modal') closeGoalModal(); });
 $('#log-modal').addEventListener('click', e => { if (e.target.id === 'log-modal') closeLogModal(); });
+$('#manual-modal').addEventListener('click', e => { if (e.target.id === 'manual-modal') closeManualModal(); });
 addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (!$('#start-modal').hidden) closeStartModal();
     if (!$('#custom-modal').hidden) closeCustomModal();
     if (!$('#goal-modal').hidden) closeGoalModal();
     if (!$('#log-modal').hidden) closeLogModal();
+    if (!$('#manual-modal').hidden) closeManualModal();
   }
 });
 

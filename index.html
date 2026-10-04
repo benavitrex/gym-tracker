@@ -78,6 +78,17 @@
 </section>
 
 
+<!-- Push screen: progreso de un ejercicio -->
+<section class="ex-screen" id="ex-screen" hidden aria-label="Progreso del ejercicio">
+  <header class="ds-hd">
+    <button class="ds-back" onclick="closeExProgress()">← Volver</button>
+  </header>
+  <div class="ds-scroll" id="ex-scroll">
+    <h1 id="ex-title"></h1>
+    <div id="ex-body"></div>
+  </div>
+</section>
+
 <!-- Modal inicio -->
 <div class="modal-bg" id="start-modal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
@@ -111,6 +122,24 @@
   </div>
 </div>
 
+
+<!-- Modal ejercicio a mano -->
+<div class="modal-bg" id="manual-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="man-title">
+    <h2 id="man-title">Añadir ejercicio a mano</h2>
+    <p>Escribe cualquier nombre; lo clasifico por ti.</p>
+    <label for="man-name">Nombre del ejercicio</label>
+    <input class="inp l" id="man-name" maxlength="40" autocomplete="off" placeholder="Ej. Press inclinado en Smith"
+      oninput="onManualInput()" onkeydown="if(event.key==='Enter')saveManualEx()">
+    <div class="detect" id="man-detect" aria-live="polite"></div>
+    <label>Grupo muscular (opcional)</label>
+    <div class="chips" id="man-cat"></div>
+    <div class="actions" style="margin-top:16px">
+      <button class="btn g" onclick="closeManualModal()">Cancelar</button>
+      <button class="btn" onclick="saveManualEx()">Añadir al día</button>
+    </div>
+  </div>
+</div>
 
 <!-- Modal log del día -->
 <div class="modal-bg" id="log-modal" hidden>
