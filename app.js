@@ -8,7 +8,7 @@ const num = v => parseFloat(String(v).replace(',', '.')) || 0;
 const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const DETECT_RULES = [
-  ['hombros', ['press militar','militar','hombro','elevacion lateral','elevaciones lateral','lateral raise','elevacion frontal','elevaciones frontal','pajaro','rear delt','arnold','encogimiento','shrug','deltoid','overhead press']],
+  ['hombros', ['press militar','militar','hombro','elevacion lateral','elevaciones lateral','lateral raise','elevacion frontal','elevaciones frontal','pajaro','rear delt','face pull','arnold','encogimiento','shrug','deltoid','overhead press']],
   ['abdomen', ['crunch','plancha','plank','abdom','core','twist','ab wheel','rueda abdominal','elevacion de pierna','elevaciones de pierna','sit up','situp','oblicu','hollow','mountain climber']],
   ['piernas', ['sentadilla','squat','prensa','zancada','lunge','pierna','gemelo','pantorrilla','femoral','cuadricep','gluteo','hip thrust','rumano','isquio','aductor','abductor','step up','hack','calf']],
   ['brazos',  ['curl','bicep','tricep','martillo','frances','predicador','antebrazo','skull','patada de tricep']],
@@ -25,10 +25,7 @@ S.plan = S.plan || {};
 S.customEx = S.customEx || [];
 S.settings = S.settings || { theme: 'oled', units: 'kg' };
 S.settings.name = S.settings.name ?? 'Eduardo';
-S.goals = S.goals || [
-  { name: 'Sentadilla', target: 100 },
-  { name: 'Press de banca', target: 80 }
-];
+S.goals = S.goals || [];
 
 let ss = null;
 try { ss = JSON.parse(localStorage.getItem('gt_s')); } catch (e) {}
@@ -39,10 +36,9 @@ const saveS = () => { try { ss ? localStorage.setItem('gt_s', JSON.stringify(ss)
 const saveLogs = () => { try { localStorage.setItem('gt', JSON.stringify(S)); } catch (e) {} };
 
 let R = { end: 0, fin: false }, AC = null, wl = null;
-let chartDays = 30;
 let openDayKey = null, dayCloseTimer = null;
 let dayRadarCur = null, dayRadarRaf = 0;
-let exName = null, exCal = { y: 0, m: 0 }, exCloseTimer = null, manualCat = null;
+let exName = null, exCal = { y: 0, m: 0 }, exCloseTimer = null;
 let calYear = new Date().getFullYear(), calMonth = new Date().getMonth(); // 0-11
 
 /* ===== Temas ===== */
@@ -99,72 +95,15 @@ const MGROUPS = [
   { k: 'abdomen', label: 'Abdomen', emoji: '🔥', color: '#f472b6' }
 ];
 const MG = Object.fromEntries(MGROUPS.map(m => [m.k, m]));
-const EQUIP = [
-  { k: 'barra', label: 'Barra' },
-  { k: 'mancuerna', label: 'Mancuerna' },
-  { k: 'maquina', label: 'Máquina' },
-  { k: 'polea', label: 'Polea' },
-  { k: 'peso_corporal', label: 'Peso corporal' }
-];
-
-const LIB = [
-  { name: 'Press de banca', equip: 'barra', cat: 'pecho', primary: ['pecho'], secondary: ['hombros', 'brazos'] },
-  { name: 'Press inclinado con barra', equip: 'barra', cat: 'pecho', primary: ['pecho'], secondary: ['hombros', 'brazos'] },
-  { name: 'Press declinado', equip: 'barra', cat: 'pecho', primary: ['pecho'], secondary: ['brazos'] },
-  { name: 'Aperturas con mancuernas', equip: 'mancuerna', cat: 'pecho', primary: ['pecho'], secondary: [] },
-  { name: 'Fondos en paralelas', equip: 'peso_corporal', cat: 'pecho', primary: ['pecho', 'brazos'], secondary: ['hombros'] },
-  { name: 'Press con mancuernas', equip: 'mancuerna', cat: 'pecho', primary: ['pecho'], secondary: ['hombros', 'brazos'] },
-  { name: 'Crossover en polea', equip: 'polea', cat: 'pecho', primary: ['pecho'], secondary: [] },
-  { name: 'Dominadas', equip: 'peso_corporal', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
-  { name: 'Jalón al pecho', equip: 'maquina', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
-  { name: 'Remo con barra', equip: 'barra', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
-  { name: 'Remo con mancuerna', equip: 'mancuerna', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
-  { name: 'Peso muerto', equip: 'barra', cat: 'espalda', primary: ['espalda', 'piernas'], secondary: [] },
-  { name: 'Remo en máquina', equip: 'maquina', cat: 'espalda', primary: ['espalda'], secondary: ['brazos'] },
-  { name: 'Face pull', equip: 'polea', cat: 'espalda', primary: ['espalda', 'hombros'], secondary: [] },
-  { name: 'Hiperextensiones', equip: 'maquina', cat: 'espalda', primary: ['espalda'], secondary: [] },
-  { name: 'Sentadilla', equip: 'barra', cat: 'piernas', primary: ['piernas'], secondary: [] },
-  { name: 'Prensa de piernas', equip: 'maquina', cat: 'piernas', primary: ['piernas'], secondary: [] },
-  { name: 'Peso muerto rumano', equip: 'barra', cat: 'piernas', primary: ['piernas'], secondary: ['espalda'] },
-  { name: 'Zancadas', equip: 'mancuerna', cat: 'piernas', primary: ['piernas'], secondary: [] },
-  { name: 'Extensiones de cuádriceps', equip: 'maquina', cat: 'piernas', primary: ['piernas'], secondary: [] },
-  { name: 'Curl femoral', equip: 'maquina', cat: 'piernas', primary: ['piernas'], secondary: [] },
-  { name: 'Elevación de gemelos', equip: 'maquina', cat: 'piernas', primary: ['piernas'], secondary: [] },
-  { name: 'Hip thrust', equip: 'barra', cat: 'piernas', primary: ['piernas'], secondary: [] },
-  { name: 'Sentadilla búlgara', equip: 'mancuerna', cat: 'piernas', primary: ['piernas'], secondary: [] },
-  { name: 'Curl de bíceps con barra', equip: 'barra', cat: 'brazos', primary: ['brazos'], secondary: [] },
-  { name: 'Curl con mancuernas', equip: 'mancuerna', cat: 'brazos', primary: ['brazos'], secondary: [] },
-  { name: 'Curl martillo', equip: 'mancuerna', cat: 'brazos', primary: ['brazos'], secondary: [] },
-  { name: 'Extensiones de tríceps', equip: 'polea', cat: 'brazos', primary: ['brazos'], secondary: [] },
-  { name: 'Press francés', equip: 'barra', cat: 'brazos', primary: ['brazos'], secondary: [] },
-  { name: 'Fondos de tríceps', equip: 'peso_corporal', cat: 'brazos', primary: ['brazos'], secondary: ['pecho'] },
-  { name: 'Curl en polea', equip: 'polea', cat: 'brazos', primary: ['brazos'], secondary: [] },
-  { name: 'Press militar', equip: 'barra', cat: 'hombros', primary: ['hombros'], secondary: ['brazos'] },
-  { name: 'Elevaciones laterales', equip: 'mancuerna', cat: 'hombros', primary: ['hombros'], secondary: [] },
-  { name: 'Elevaciones frontales', equip: 'mancuerna', cat: 'hombros', primary: ['hombros'], secondary: [] },
-  { name: 'Pájaros / rear delt', equip: 'mancuerna', cat: 'hombros', primary: ['hombros'], secondary: ['espalda'] },
-  { name: 'Press Arnold', equip: 'mancuerna', cat: 'hombros', primary: ['hombros'], secondary: ['brazos'] },
-  { name: 'Encogimientos de hombros', equip: 'mancuerna', cat: 'hombros', primary: ['hombros', 'espalda'], secondary: [] },
-  { name: 'Crunch', equip: 'peso_corporal', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
-  { name: 'Plancha', equip: 'peso_corporal', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
-  { name: 'Elevación de piernas', equip: 'peso_corporal', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
-  { name: 'Russian twist', equip: 'peso_corporal', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
-  { name: 'Ab wheel', equip: 'peso_corporal', cat: 'abdomen', primary: ['abdomen'], secondary: [] },
-  { name: 'Cable crunch', equip: 'polea', cat: 'abdomen', primary: ['abdomen'], secondary: [] }
-];
-
-function allExercises() { return [...LIB, ...S.customEx]; }
+/* Base de ejercicios: la crea cada usuario (S.customEx). No hay ejercicios precargados. */
+function allExercises() { return S.customEx; }
 function findEx(name) {
-  const n = name.toLowerCase().trim();
-  return allExercises().find(e => e.name.toLowerCase() === n) || null;
+  const n = norm(name || '');
+  return n ? (S.customEx.find(e => norm(e.name) === n) || null) : null;
 }
 function getMuscles(name) {
   const e = findEx(name);
-  if (!e) {
-    const d = detectEx(name);
-    return d ? { primary: d.primary, secondary: d.secondary } : { primary: [], secondary: [] };
-  }
-  return { primary: e.primary || [], secondary: e.secondary || [] };
+  return e ? { primary: e.primary || [], secondary: e.secondary || [] } : { primary: [], secondary: [] };
 }
 
 /* ===== Días ===== */
@@ -317,6 +256,194 @@ function homeRecent() {
   }).join('') : '<div class="empty" style="margin:0"><strong>Aún no hay entrenamientos</strong><span>Tu historial aparecerá aquí al finalizar una sesión.</span></div>'}</div>`;
 }
 
+/* ===== Frases motivacionales (una distinta cada día) ===== */
+const qs = (a, ...l) => l.map(q => ({ q, a }));
+const QUOTES = [
+  ...qs('Arnold Schwarzenegger',
+    "La mente es el límite. Mientras la mente pueda imaginar que puedes hacer algo, puedes hacerlo, siempre que realmente lo creas al 100%.",
+    "Las últimas tres o cuatro repeticiones son las que hacen que el músculo crezca. Este área de dolor divide al campeón de alguien que no lo es.",
+    "Si quieres convertirte en un campeón, no puedes dejar que la duda te detenga. Tienes que ir a por todas.",
+    "La fuerza no viene de ganar. Tus luchas desarrollan tus fortalezas. Cuando pasas por dificultades y decides no rendirte, eso es fuerza.",
+    "Resiste el dolor, supera el obstáculo y verás los resultados.",
+    "No puedes subir la escalera del éxito con las manos en los bolsillos.",
+    "Todos tienen compasión por los débiles; la envidia hay que ganársela.",
+    "El entrenamiento nos da una salida para las energías reprimidas, tonificando el espíritu tanto como el cuerpo.",
+    "Visualiza tu meta. Si ves el resultado final en tu mente, tu cuerpo encontrará la forma de llegar allí.",
+    "No le tengas miedo al fracaso. El fracaso no es lo opuesto al éxito, es parte del proceso hacia la victoria."),
+  ...qs('Ronnie Coleman',
+    "Todo el mundo quiere ser culturista, pero nadie quiere levantar pesos pesados.",
+    "No hay nada que no pueda mover si pongo mi mente en ello. ¡Yeah buddy!",
+    "Tienes que entrenar más duro que ayer si quieres resultados distintos mañana.",
+    "El dolor es solo una sensación temporal, pero la gloria de haberlo dado todo dura para siempre.",
+    "No hay secretos para el éxito. Es el resultado de la preparación, el trabajo duro y aprender de los errores.",
+    "Si no estás dando el 100% en cada repetición, le estás regalando tu lugar a alguien más.",
+    "Cuando sientes que no puedes dar un paso más, ahí es exactamente donde empieza el verdadero progreso.",
+    "La disciplina es hacer lo que tienes que hacer, incluso cuando no tienes ganas de hacerlo.",
+    "Mantenlo simple: come limpio, entrena pesado y sé constante día tras día.",
+    "El trabajo duro siempre supera al talento cuando el talento no trabaja duro."),
+  ...qs('Jay Cutler',
+    "No entreno para ser el segundo mejor. Entreno para ser el mejor en lo que hago.",
+    "La consistencia es la clave real. Puedes tener el mejor plan del mundo, pero sin constancia no vale nada.",
+    "La diferencia entre lo imposible y lo posible reside en la determinación de una persona.",
+    "Superar las derrotas y aprender de ellas es lo que te define como un verdadero campeón.",
+    "No busques atajos. Los resultados duraderos requieren sacrificio y rutina diaria.",
+    "Haz que cada día cuente. Un entrenamiento desperdiciado es una oportunidad de crecimiento perdida.",
+    "Cuando la gente duda de ti, usa esa duda como combustible para entrenar aún más fuerte.",
+    "El éxito en el gimnasio no se mide en horas, sino en la intensidad que pones en cada segundo.",
+    "Construir un gran cuerpo es como construir un edificio: necesita bases sólidas y mucha paciencia.",
+    "Si no te desafía, no te transforma."),
+  ...qs('Dorian Yates',
+    "Entreno hasta el fallo absoluto porque ahí es donde ocurre la adaptación del cuerpo.",
+    "No vengo al gimnasio a socializar. Vengo a trabajar, darlo todo e irme a casa a recuperarme.",
+    "La intensidad en el entrenamiento no es una opción; es la regla si quieres llegar a la cima.",
+    "La mente debe ser siempre más fuerte que la incomodidad del músculo que arde.",
+    "La preparación silenciosa produce los resultados más ruidosos.",
+    "Si estás haciendo exactamente lo mismo que los demás, obtendrás los mismos resultados que los demás.",
+    "La verdadera disciplina se demuestra en la oscuridad, cuando nadie te está mirando.",
+    "Esto no es solo un deporte de un par de horas; es un estilo de vida de 24 horas al día."),
+  ...qs('Phil Heath',
+    "Cree en tu potencial incluso cuando absolutamente nadie más pueda verlo.",
+    "Para ser un campeón, debes pensar y actuar como un campeón mucho antes de obtener el título.",
+    "El trabajo que realizas en la sombra es lo que te hace brillar bajo las luces del escenario.",
+    "Cada repetición te acerca o te aleja de tu objetivo. Elige sabiamente en cada serie.",
+    "No dejes que los aplausos te suban a la cabeza ni que las críticas te derrumben.",
+    "La grandeza no se regala a nadie, se gana a diario con sudor y sacrificio.",
+    "Tu único competidor real es la persona que ves reflejada en el espejo cada mañana."),
+  ...qs('Lee Haney',
+    "Estimula el músculo, no lo aniquiles.",
+    "El éxito se construye con el equilibrio perfecto entre el esfuerzo en el gimnasio y la sabiduría de la recuperación.",
+    "La actitud con la que entras al gimnasio determina los resultados que te llevas a casa.",
+    "Para durar en la cima, debes aprender a escuchar a tu cuerpo tanto como le exiges.",
+    "Sé la versión más fuerte y disciplinada de ti mismo en cada jornada."),
+  ...qs('Franco Columbu', "Si tienes una visión clara de lo que quieres lograr, ningún peso será demasiado pesado."),
+  ...qs('Frank Zane', "La simetría, la proporción y el control mental son tan importantes como la fuerza bruta."),
+  ...qs('Franco Columbu', "El fracaso es solo un estado mental temporal hasta que decides volver a levantarte."),
+  ...qs('Frank Zane', "Define tus metas, mantén el enfoque y elimina cualquier distracción que no te acerque a ellas."),
+  ...qs('Sergio Oliva', "Nunca permitas que el cansancio físico venza a tu pasión interior."),
+  ...qs('Dexter Jackson', "La longevidad en el éxito proviene de una disciplina inquebrantable y el respeto absoluto al proceso."),
+  ...qs('Mamdouh “Big Ramy” Elssbiay', "No importa de dónde vengas; si trabajas más duro que nadie, puedes llegar a la cima del mundo."),
+  ...qs('Hadi Choopan', "La lucha diaria no es contra las pesas del gimnasio, es contra tus propios límites mentales."),
+  ...qs('Derek Lunsford', "Cuando combinas fe, trabajo duro y perseverancia, nada en esta vida es imposible."),
+  ...qs('Chris Bumstead', "No sueñes únicamente con la victoria; entrena duro cada día para hacer de la victoria una consecuencia inevitable.")
+];
+let quoteTimer = 0, quoteDone = false;
+// Orden aleatorio fijo (semilla): recorre las 60 frases sin repetir y cambia a medianoche.
+function quoteOfDay() {
+  const n = new Date(), day = Math.floor(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) / 864e5);
+  const idx = QUOTES.map((_, i) => i); let s = 20260611;
+  const rnd = () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
+  for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+  return QUOTES[idx[day % QUOTES.length]];
+}
+function quoteCard() {
+  const q = quoteOfDay();
+  return `<div class="card b-quote" id="quote-card"><span class="q-mark" aria-hidden="true">“</span>
+    <p class="q-text"><span id="q-on">${quoteDone ? esc(q.q) : ''}</span><span class="q-caret" id="q-caret"${quoteDone ? ' hidden' : ''}></span><span id="q-off">${quoteDone ? '' : esc(q.q)}</span></p>
+    <div class="q-author${quoteDone ? ' show' : ''}" id="q-author">— ${esc(q.a)}</div></div>`;
+}
+function quoteFinish() {
+  quoteDone = true;
+  const c = $('#q-caret'), a = $('#q-author');
+  if (c) c.hidden = true;
+  if (a) a.classList.add('show');
+}
+function startQuote() {
+  clearTimeout(quoteTimer);
+  if (quoteDone) return;
+  const txt = quoteOfDay().q;
+  if (!$('#q-on')) return;
+  if (REDUCED) { $('#q-on').textContent = txt; $('#q-off').textContent = ''; quoteFinish(); return; }
+  let i = 0;
+  const step = () => {
+    const on = $('#q-on'), off = $('#q-off');
+    if (!on) { quoteDone = true; return; }       // el usuario salió de Inicio: no repetir la animación
+    i++; on.textContent = txt.slice(0, i); off.textContent = txt.slice(i);
+    if (i >= txt.length) { quoteTimer = setTimeout(quoteFinish, 350); return; }
+    const ch = txt[i - 1];
+    quoteTimer = setTimeout(step, ',;:'.includes(ch) ? 170 : '.!?'.includes(ch) ? 260 : ch === ' ' ? 40 : 22 + Math.random() * 22);
+  };
+  quoteTimer = setTimeout(step, 500);
+}
+
+/* ===== Base de ejercicios del usuario (empieza vacía) ===== */
+const MUSCLE_OPTS = [
+  { k: 'pecho', l: 'Pecho' }, { k: 'espalda', l: 'Espalda' }, { k: 'hombros', l: 'Hombros' },
+  { k: 'biceps', l: 'Bíceps' }, { k: 'triceps', l: 'Tríceps' }, { k: 'piernas', l: 'Piernas' }, { k: 'abdomen', l: 'Core' }
+];
+const MO = Object.fromEntries(MUSCLE_OPTS.map(m => [m.k, m.l]));
+const toGroup = k => (k === 'biceps' || k === 'triceps') ? 'brazos' : k;
+function buildRec(name, pri, sec) {
+  const primary = [...new Set(pri.map(toGroup))];
+  const secondary = [...new Set(sec.map(toGroup))].filter(k => !primary.includes(k));
+  const arms = a => new Set(a.filter(x => x === 'biceps' || x === 'triceps'));
+  let ar = arms(pri); if (!ar.size) ar = arms(sec);
+  const rec = { name, cat: primary[0] || '', primary, secondary, ui: { p: [...pri], s: sec.filter(k => !pri.includes(k)) } };
+  if (ar.size === 1) rec.arm = ar.has('triceps') ? 'tri' : 'bi'; else if (ar.size === 2) rec.arm = 'both';
+  return rec;
+}
+function uiOf(e) {
+  if (e.ui) return e.ui;
+  const exp = list => (list || []).flatMap(k => k === 'brazos' ? (e.arm === 'tri' ? ['triceps'] : e.arm === 'bi' ? ['biceps'] : ['biceps', 'triceps']) : (MO[k] ? [k] : []));
+  const p = exp(e.primary);
+  return { p, s: exp(e.secondary).filter(k => !p.includes(k)) };
+}
+const exTags = e => {
+  const u = uiOf(e);
+  const t = [...u.p.map(k => `<span class="mtag p">${MO[k]}</span>`), ...u.s.map(k => `<span class="mtag s">${MO[k]}</span>`)].join('');
+  return t || '<span class="mtag s">Sin clasificar</span>';
+};
+const hasKey = (n, k) => n === k || n.startsWith(k) || n.includes(' ' + k);
+// Solo para migrar datos antiguos: clasifica por palabras clave los ejercicios que ya existían en tu historial.
+function guessRec(name) {
+  const n = norm(name);
+  if (n.length < 3) return null;
+  for (const [cat, keys] of DETECT_RULES) {
+    if (!keys.some(k => hasKey(n, k))) continue;
+    const arm = cat === 'brazos' ? armOf(n) : null;
+    const pri = cat === 'brazos' ? (arm === 'tri' ? ['triceps'] : arm === 'bi' ? ['biceps'] : ['biceps', 'triceps']) : [cat];
+    const sec = [];
+    if (cat === 'pecho' && /press|banca|bench|fondos/.test(n)) sec.push('hombros', 'triceps');
+    else if (cat === 'hombros' && /press|militar|arnold/.test(n)) sec.push('triceps');
+    else if (cat === 'espalda' && /remo|row|dominada|jalon|pull/.test(n)) sec.push('biceps');
+    return buildRec(name, pri, sec);
+  }
+  return null;
+}
+// Una sola vez: todo ejercicio que ya aparece en tu historial/rutinas pasa a tu base.
+function migrateDB() {
+  S.customEx = (S.customEx || []).filter(e => e && e.name);
+  if (S.dbMigrated) return;
+  S.dbMigrated = true;
+  const names = [];
+  S.logs.forEach(l => (l.entries || []).forEach(e => names.push(e.name)));
+  Object.values(S.plan).forEach(d => ((d && d.exercises) || []).forEach(e => names.push(e.name)));
+  if (ss) ss.entries.forEach(e => names.push(e.name));
+  names.forEach(nm => {
+    if (!nm || findEx(nm)) return;
+    const g = guessRec(nm) || { name: nm, cat: '', primary: [], secondary: [], ui: { p: [], s: [] } };
+    g.name = nm; S.customEx.push(g);
+  });
+  saveLogs();
+}
+migrateDB();
+
+/* Estado compartido de Estadísticas y modales */
+const OV = [
+  { k: 'w', l: 'Entrenos', c: '#4ade80' },
+  { k: 'vol', l: 'Levantado', c: '#c084fc' },
+  { k: 'reps', l: 'Reps', c: '#60a5fa' },
+  { k: 'sets', l: 'Series', c: '#fb923c' },
+  { k: 'max', l: 'Más pesado', c: '#f87171' },
+  { k: 'secs', l: 'Tiempo', c: '#fbbf24' }
+];
+const OV_RANGES = [{ d: 30, l: 'Últimos 30 días' }, { d: 90, l: 'Últimos 90 días' }, { d: 180, l: 'Últimos 6 meses' }, { d: 365, l: 'Último año' }, { d: 0, l: 'Todo el tiempo' }];
+const XP_RANGES = [{ d: 90, l: '3M' }, { d: 180, l: '6M' }, { d: 365, l: '1A' }, { d: 0, l: 'Todo' }];
+const GOAL_COLORS = ['#fb923c', '#f87171', '#4ade80', '#60a5fa', '#c084fc', '#fbbf24'];
+let ovRange = 90, xpName = null, xpRange = 180, goalEdit = -1;
+const ovHidden = new Set();
+const CH = {};
+let xm = { ctx: 'day', editName: null, pri: [], sec: [] };
+
 /* ===== Navegación ===== */
 function show(name) {
   if (!VIEWS.includes(name)) name = 'home';
@@ -433,6 +560,7 @@ function renderHome() {
   }
 
   root.innerHTML = `
+    ${quoteCard()}
     ${homeHero()}
     ${homeStats(streak)}
     ${homeRecent()}
@@ -469,6 +597,7 @@ function renderHome() {
     </div>
   `;
   afterRender(root);
+  startQuote();
 }
 
 function shiftCal(dir) {
@@ -642,7 +771,7 @@ function renderDayRadar() {
   const day = ensureDay(openDayKey), { vals, useVol, unknown } = dayRadarVals(day), n = DR.length;
   const total = vals.reduce((a, b) => a + b, 0);
   cancelAnimationFrame(dayRadarRaf);
-  const note = unknown.length ? `<p class="hint" style="margin:10px 0 0">Sin clasificar: ${unknown.map(esc).join(', ')}. Al añadirlo a mano puedes elegir su grupo.</p>` : '';
+  const note = unknown.length ? `<p class="hint" style="margin:10px 0 0">Sin clasificar: ${unknown.map(esc).join(', ')}. Clasifícalos en Perfil → Mis ejercicios.</p>` : '';
   if (!total) {
     dayRadarCur = null;
     box.innerHTML = `<div class="chart-card"><div class="chart-hd"><strong>Distribución de volumen</strong></div>
@@ -670,88 +799,111 @@ function renderDayRadar() {
   })(t0);
 }
 
-/* ===== Añadir ejercicio a mano ===== */
-const MANUAL_CHIPS = [
-  { k: 'pecho', l: 'Pecho' }, { k: 'espalda', l: 'Espalda' }, { k: 'piernas', l: 'Piernas' }, { k: 'hombros', l: 'Hombros' },
-  { k: 'triceps', l: 'Tríceps' }, { k: 'biceps', l: 'Bíceps' }, { k: 'abdomen', l: 'Core' }
-];
-const manualPreset = k => k === 'triceps' ? { cat: 'brazos', primary: ['brazos'], secondary: [], arm: 'tri' }
-  : k === 'biceps' ? { cat: 'brazos', primary: ['brazos'], secondary: [], arm: 'bi' }
-  : { cat: k, primary: [k], secondary: [] };
-const hasKey = (n, k) => n === k || n.startsWith(k) || n.includes(' ' + k);
-function detectEx(name) {
-  const n = norm(name);
-  if (n.length < 3) return null;
-  const ex = findEx(name);
-  if (ex) return { src: 'exact', cat: ex.cat, primary: ex.primary || [], secondary: ex.secondary || [], arm: ex.arm, ref: ex.name };
-  let best = null;
-  allExercises().forEach(e => {
-    const en = norm(e.name);
-    if (en.length < 4) return;
-    if ((n.includes(en) || (n.length >= 5 && en.includes(n))) && (!best || en.length > norm(best.name).length)) best = e;
-  });
-  if (best) return { src: 'lib', cat: best.cat, primary: [...(best.primary || [])], secondary: [...(best.secondary || [])], arm: best.arm, ref: best.name };
-  for (const [cat, keys] of DETECT_RULES) {
-    if (!keys.some(k => hasKey(n, k))) continue;
-    const sec = [];
-    if (cat === 'pecho' && /press|banca|bench|fondos/.test(n)) sec.push('hombros', 'brazos');
-    else if (cat === 'hombros' && /press|militar|arnold/.test(n)) sec.push('brazos');
-    else if (cat === 'espalda' && /remo|row|dominada|jalon|pull/.test(n)) sec.push('brazos');
-    return { src: 'kw', cat, primary: [cat], secondary: sec, arm: cat === 'brazos' ? (armOf(n) || undefined) : undefined };
+/* ===== Mis ejercicios: alta con nombre y músculos ===== */
+function openManualModal() { if (openDayKey) openExModal('day'); }
+function openExModal(ctx, name = '', rec = null) {
+  xm = { ctx, editName: rec ? rec.name : null, pri: [], sec: [] };
+  if (rec) { const u = uiOf(rec); xm.pri = [...u.p]; xm.sec = [...u.s]; }
+  const names = S.customEx.map(e => e.name).sort((a, b) => a.localeCompare(b, 'es'));
+  $('#exlist-x').innerHTML = rec ? '' : names.map(n => `<option value="${esc(n)}">`).join('');
+  const inp = $('#xm-name');
+  inp.value = rec ? rec.name : name;
+  inp.readOnly = !!rec;
+  $('#xm-title').textContent = rec ? 'Editar ejercicio' : ctx === 'db' ? 'Nuevo ejercicio' : 'Añadir ejercicio';
+  $('#xm-sub').textContent = rec ? 'Ajusta qué músculos trabaja.'
+    : ctx === 'db' ? 'Ponle un nombre claro y marca qué músculos trabaja.'
+    : 'Elige uno de tu base o crea uno nuevo indicando qué músculos trabaja.';
+  $('#xm-save').textContent = rec || ctx === 'db' ? 'Guardar' : ctx === 'train' ? 'Añadir a la sesión' : 'Añadir al día';
+  $('#xm-del').hidden = !rec;
+  renderXmChips(); onExName();
+  $('#ex-modal').hidden = false;
+  if (!rec) setTimeout(() => inp.focus(), 60);
+}
+function closeExModal() { $('#ex-modal').hidden = true; }
+function renderXmChips() {
+  const row = (arr, f) => MUSCLE_OPTS.map(m => `<button type="button" class="chip ${arr.includes(m.k) ? 'on' : ''}" aria-pressed="${arr.includes(m.k)}" onclick="togXm('${f}','${m.k}')">${m.l}</button>`).join('');
+  $('#xm-pri').innerHTML = row(xm.pri, 'pri');
+  $('#xm-sec').innerHTML = row(xm.sec, 'sec');
+}
+function togXm(f, k) {
+  const a = xm[f], o = xm[f === 'pri' ? 'sec' : 'pri'], i = a.indexOf(k);
+  if (i >= 0) a.splice(i, 1); else { a.push(k); const j = o.indexOf(k); if (j >= 0) o.splice(j, 1); }
+  renderXmChips();
+}
+function onExName() {
+  const name = $('#xm-name').value.replace(/\s+/g, ' ').trim(), box = $('#xm-muscles'), det = $('#xm-detect');
+  const ex = !xm.editName && name ? findEx(name) : null;
+  if (ex) { box.hidden = true; det.innerHTML = `Ya está en tu base: <span class="muscle-tags" style="display:inline-flex;margin:0 0 0 4px">${exTags(ex)}</span>`; }
+  else { box.hidden = false; det.textContent = !xm.editName && name.length >= 2 ? 'Ejercicio nuevo: indica qué músculos trabaja.' : ''; }
+}
+function saveExModal() {
+  if (xm.editName) {
+    const rec = findEx(xm.editName);
+    if (!rec) { closeExModal(); return; }
+    if (!xm.pri.length) { toast('Elige al menos un músculo principal'); return; }
+    S.customEx[S.customEx.indexOf(rec)] = buildRec(rec.name, xm.pri, xm.sec);
+    saveLogs(); closeExModal(); refreshExViews(); toast('Ejercicio actualizado');
+    return;
   }
-  return null;
+  const raw = $('#xm-name').value.replace(/\s+/g, ' ').trim();
+  if (raw.length < 2) { toast('Escribe un nombre claro para el ejercicio'); return; }
+  let rec = findEx(raw);
+  if (rec && xm.ctx === 'db') { toast('Ese ejercicio ya existe en tu base'); return; }
+  if (!rec) {
+    if (!xm.pri.length) { toast('Elige qué músculo principal trabaja'); return; }
+    rec = buildRec(raw, xm.pri, xm.sec);
+    S.customEx.push(rec);
+  }
+  saveLogs();
+  const ctx = xm.ctx;
+  closeExModal();
+  if (ctx === 'day') addToDay(rec.name);
+  else if (ctx === 'train') addToSession(rec.name);
+  else { refreshExViews(); toast('Ejercicio guardado'); }
 }
-function openManualModal() {
-  if (!openDayKey) return;
-  manualCat = null;
-  $('#man-name').value = '';
-  const names = [...new Set([...allExercises().map(e => e.name), ...S.logs.flatMap(l => (l.entries || []).map(e => e.name))])];
-  $('#exlist-man').innerHTML = names.map(n => `<option value="${esc(n)}">`).join('');
-  renderManualChips(); onManualInput();
-  $('#manual-modal').hidden = false;
-  setTimeout(() => $('#man-name').focus(), 60);
+function delExModal() {
+  const rec = xm.editName && findEx(xm.editName);
+  if (!rec) return;
+  if (!confirm(`¿Quitar "${rec.name}" de tu base? Tu historial se conserva, pero el ejercicio quedará sin clasificar.`)) return;
+  S.customEx.splice(S.customEx.indexOf(rec), 1);
+  saveLogs(); closeExModal(); refreshExViews(); toast('Ejercicio eliminado');
 }
-function closeManualModal() { $('#manual-modal').hidden = true; }
-function renderManualChips() {
-  $('#man-cat').innerHTML = `<button type="button" class="chip ${manualCat ? '' : 'on'}" onclick="setManualCat(null)">Auto</button>`
-    + MANUAL_CHIPS.map(m => `<button type="button" class="chip ${manualCat === m.k ? 'on' : ''}" onclick="setManualCat('${m.k}')">${m.l}</button>`).join('');
+function refreshExViews() {
+  if (!$('.view[data-view="profile"]').hidden) renderProfile();
+  if (!$('.view[data-view="stats"]').hidden) renderStats();
+  if (openDayKey) renderDayScreen();
 }
-function setManualCat(k) { manualCat = k; renderManualChips(); onManualInput(); }
-function onManualInput() {
-  const el = $('#man-detect'), name = $('#man-name').value.trim();
-  if (name.length < 3) { el.innerHTML = ''; return; }
-  const lab = (a, arm) => a.map(k => k === 'brazos' && arm ? (arm === 'tri' ? 'Tríceps' : 'Bíceps') : (MG[k] ? (k === 'abdomen' ? 'Core' : MG[k].label) : k)).join(', ');
-  if (manualCat) { el.innerHTML = `Se clasificará como <b>${MANUAL_CHIPS.find(m => m.k === manualCat).l}</b>.`; return; }
-  const d = detectEx(name);
-  if (!d) el.innerHTML = 'No pude clasificarlo: elige un grupo o añádelo sin clasificar.';
-  else if (d.src === 'exact') el.innerHTML = `Ya existe en tu biblioteca: <b>${esc(d.ref)}</b>.`;
-  else el.innerHTML = `Detectado: <b>${lab(d.primary, d.arm)}</b>${d.secondary.length ? ' · secundarios: ' + lab(d.secondary) : ''}`;
-}
-function saveManualEx() {
+function addToDay(name) {
   const key = openDayKey;
   if (!key) return;
-  const raw = $('#man-name').value.replace(/\s+/g, ' ').trim();
-  if (!raw) { toast('Escribe un nombre'); return; }
-  const existing = findEx(raw), name = existing ? existing.name : raw, day = ensureDay(key);
+  const day = ensureDay(key);
   if (day.exercises.some(x => norm(x.name) === norm(name))) { toast('Ese ejercicio ya está en este día'); return; }
-  let classified = true;
-  if (!existing) {
-    const d = manualCat ? manualPreset(manualCat) : detectEx(raw);
-    if (d) {
-      const rec = { name, cat: d.cat, primary: [...d.primary], secondary: (d.secondary || []).filter(k => !d.primary.includes(k)) };
-      if (d.arm) rec.arm = d.arm;
-      S.customEx.push(rec);
-    } else classified = false;
-  }
   const last = lastSets(name);
   const sets = last && last.length ? last.map(s => ({ kg: s.kg || '', reps: s.reps || '' })) : [{ kg: '', reps: '' }, { kg: '', reps: '' }, { kg: '', reps: '' }];
   day.exercises.push({ name, rest: 90, sets });
   saveLogs();
-  closeManualModal();
   renderWeek();
-  toast(classified ? 'Ejercicio añadido' : 'Añadido sin clasificar');
+  toast('Ejercicio añadido');
   requestAnimationFrame(() => { const c = $$('#day-body .pex'); if (c.length) c[c.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' }); });
 }
+function addToSession(name) {
+  if (!ss) return;
+  const l = lastSets(name);
+  const sets = l && l.length ? l.map(s => ({ t: 'E', kg: s.kg, reps: s.reps, done: false })) : [0, 1, 2].map(() => ({ t: 'E', kg: '', reps: '', done: false }));
+  ss.entries.push({ name, rest: 90, sets });
+  saveS(); renderTrain();
+  const c = document.querySelectorAll('.ex');
+  if (c.length) c[c.length - 1].scrollIntoView({ block: 'center' });
+}
+function dbCard() {
+  const list = [...S.customEx].sort((a, b) => a.name.localeCompare(b.name, 'es'));
+  return `<div class="set-card"><h3>Mis ejercicios</h3>
+    <p class="hint" style="margin:0 0 8px">Tu base personal. Cada ejercicio indica qué músculos trabaja y con eso se arman tus gráficos.</p>
+    ${list.length ? list.map(e => `<button type="button" class="db-row" data-ex="${esc(e.name)}" onclick="editEx(this.dataset.ex)"><span class="db-n">${esc(e.name)}</span><span class="muscle-tags">${exTags(e)}</span></button>`).join('')
+      : '<div class="empty" style="margin:0 0 8px"><strong>Aún no tienes ejercicios</strong><span>Crea el primero o agrégalos directo al armar una rutina.</span></div>'}
+    <button class="btn" style="margin-top:12px" onclick="openExModal('db')">+ Nuevo ejercicio</button></div>`;
+}
+function editEx(name) { const r = findEx(name); if (r) openExModal('edit', '', r); }
 
 /* ===== Progreso por ejercicio ===== */
 function exHistory(name) {
@@ -908,39 +1060,6 @@ function openStartModal() {
 function closeStartModal() { $('#start-modal').hidden = true; }
 function confirmStart() { closeStartModal(); startSess(true); show('train'); }
 
-let customSel = { cat: 'pecho', pri: [], sec: [] };
-function openCustomModal() {
-  customSel = { cat: 'pecho', pri: [], sec: [] };
-  $('#custom-name').value = '';
-  renderCustomChips();
-  $('#custom-modal').hidden = false;
-}
-function closeCustomModal() { $('#custom-modal').hidden = true; }
-function renderCustomChips() {
-  $('#custom-cat').innerHTML = MGROUPS.map(m =>
-    `<button class="chip ${customSel.cat === m.k ? 'on' : ''}" onclick="customSel.cat='${m.k}';renderCustomChips()">${m.label}</button>`).join('');
-  $('#custom-pri').innerHTML = MGROUPS.map(m =>
-    `<button class="chip ${customSel.pri.includes(m.k) ? 'on' : ''}" onclick="togCustom('pri','${m.k}')">${m.label}</button>`).join('');
-  $('#custom-sec').innerHTML = MGROUPS.map(m =>
-    `<button class="chip ${customSel.sec.includes(m.k) ? 'on' : ''}" onclick="togCustom('sec','${m.k}')">${m.label}</button>`).join('');
-}
-function togCustom(field, k) {
-  const arr = customSel[field];
-  const i = arr.indexOf(k);
-  if (i >= 0) arr.splice(i, 1); else arr.push(k);
-  renderCustomChips();
-}
-function saveCustomEx() {
-  const name = $('#custom-name').value.trim();
-  if (!name) { alert('Escribe un nombre'); return; }
-  if (findEx(name)) { alert('Ya existe un ejercicio con ese nombre'); return; }
-  if (!customSel.pri.length) { alert('Selecciona al menos un músculo principal'); return; }
-  S.customEx.push({ name, cat: customSel.cat, primary: [...customSel.pri], secondary: [...customSel.sec].filter(k => !customSel.pri.includes(k)) });
-  saveLogs();
-  closeCustomModal();
-  if (openDayKey) renderDayScreen();
-}
-
 /* ===== Paso 5: Estadísticas ===== */
 function computeStats() {
   let vol = 0, reps = 0, sets = 0, secs = 0;
@@ -963,116 +1082,315 @@ function computeStats() {
   return { vol, reps, sets, secs, byDate, maxByEx };
 }
 
-function chartSVG(days) {
-  const { byDate } = computeStats();
-  const today = new Date();
-  const points = [];
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const key = dkey(d);
-    points.push({ date: key, n: byDate[key] || 0, label: d.getDate() });
+/* ===== Gráficos de línea reutilizables (eje X = tiempo real) ===== */
+function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function niceStep(x) { const m = Math.pow(10, Math.floor(Math.log10(x))), f = x / m; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * m; }
+function niceRange(lo, hi, n = 4) {
+  lo = Math.max(0, lo);
+  if (hi <= lo) hi = lo + 1;
+  const step = niceStep((hi - lo) / n);
+  return { lo: Math.floor(lo / step) * step, hi: Math.ceil(hi / step) * step, step };
+}
+function monShort(s) { return s.replace('.', '').replace(/^sept$/, 'sep'); }
+function shortDM(t) { return monShort(new Date(t).toLocaleDateString('es', { day: 'numeric', month: 'short' }).replace(/ sept\.?$/, ' sep')); }
+function xTicks(t0, t1) {
+  const days = (t1 - t0) / 864e5, out = [];
+  if (days <= 45) {
+    const step = days <= 10 ? 2 : 7;
+    for (let t = t0; t <= t1 + 36e5; t += step * 864e5) out.push({ t, l: shortDM(t) });
+    return out;
   }
-  const maxN = Math.max(1, ...points.map(p => p.n));
-  const W = 320, H = 120, padL = 8, padR = 8, padT = 12, padB = 24;
-  const innerW = W - padL - padR, innerH = H - padT - padB;
-
-  if (points.every(p => p.n === 0)) {
-    return `<div class="chart-empty">Aún no hay entrenamientos registrados</div>`;
+  const months = days / 30.4, step = months <= 7 ? 1 : months <= 14 ? 2 : months <= 30 ? 3 : 6, yr = months > 14;
+  const d = new Date(t0); d.setDate(1); d.setHours(12, 0, 0, 0);
+  if (d.getTime() < t0) d.setMonth(d.getMonth() + 1);
+  for (; d.getTime() <= t1; d.setMonth(d.getMonth() + step)) {
+    const m = monShort(d.toLocaleDateString('es', { month: 'short' }));
+    out.push({ t: d.getTime(), l: yr ? m + ' ' + String(d.getFullYear()).slice(2) : m });
   }
-
-  const coords = points.map((p, i) => {
-    const x = padL + (i / (points.length - 1 || 1)) * innerW;
-    const y = padT + innerH - (p.n / maxN) * innerH;
-    return { x, y, ...p };
+  return out;
+}
+/* o: { t0, t1, yr:{lo,hi,step}, yFmt, series:[{c,pts:[[t,y,isPR?]],dash,smooth,area,pr}], tip(i), dots, still } */
+function lineChart(id, o) {
+  const W = 340, H = 210, L = 38, R = 14, T = 14, B = 26, iw = W - L - R, ih = H - T - B;
+  const span = Math.max(864e5, o.t1 - o.t0), yr = o.yr;
+  const X = t => L + (t - o.t0) / span * iw, Y = v => T + ih - (v - yr.lo) / (yr.hi - yr.lo) * ih;
+  let g = '';
+  const nY = Math.round((yr.hi - yr.lo) / yr.step);
+  for (let i = 0; i <= nY; i++) {
+    const v = yr.lo + i * yr.step, y = Y(v).toFixed(1);
+    g += `<line class="lc-gl" x1="${L}" x2="${W - R}" y1="${y}" y2="${y}"/><text class="lc-yl" x="${L - 6}" y="${(+y + 3).toFixed(1)}" text-anchor="end">${o.yFmt(v)}</text>`;
+  }
+  xTicks(o.t0, o.t0 + span).forEach(k => {
+    const x = X(k.t);
+    if (x < L - 1 || x > W - R + 1) return;
+    g += `<line class="lc-tk" x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${T + ih}" y2="${T + ih + 4}"/><text class="lc-xl" x="${x.toFixed(1)}" y="${H - 6}" text-anchor="${x < L + 14 ? 'start' : x > W - R - 14 ? 'end' : 'middle'}">${k.l}</text>`;
   });
-
-  const line = coords.map((c, i) => `${i ? 'L' : 'M'}${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
-  const area = line + ` L${coords[coords.length - 1].x.toFixed(1)},${padT + innerH} L${coords[0].x.toFixed(1)},${padT + innerH} Z`;
-
-  // labels: first, middle, last
-  const labels = [0, Math.floor(coords.length / 2), coords.length - 1].map(i => {
-    const c = coords[i];
-    return `<text x="${c.x}" y="${H - 6}" text-anchor="middle" fill="var(--mu)" font-size="10">${c.label}</text>`;
+  const body = o.series.map(s => {
+    const px = s.pts.map(p => ({ x: X(p[0]), y: Y(p[1]) }));
+    let d = '', area = '';
+    if (px.length > 1) {
+      d = s.smooth ? smoothPath(px) : px.map((q, i) => `${i ? 'L' : 'M'}${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ');
+      if (s.area) area = `<path class="lc-area" d="${d} L${px[px.length - 1].x.toFixed(1)},${T + ih} L${px[0].x.toFixed(1)},${T + ih} Z" style="fill:url(#${id}-g)"/>`;
+    }
+    const line = d ? `<path class="lc-line${s.dash ? ' dash' : ''}" ${s.dash ? '' : 'pathLength="1" '}d="${d}" style="stroke:${s.c}"/>` : '';
+    const lastPR = s.pr ? s.pts.reduce((a, p, i) => p[2] ? i : a, -1) : -1;
+    const few = px.length <= 18;   // con muchas sesiones solo se marcan los PR, para no ensuciar la línea
+    const dots = o.dots === false ? '' : px.map((q, i) => {
+      const pr = s.pr && s.pts[i][2];
+      if (!few && !pr) return '';
+      return (pr ? `<circle class="ex-ring" cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="9"/>` : '') +
+        `<circle class="lc-dot" cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="${pr ? 5 : 3}" style="fill:${s.c}"/>` +
+        (i === lastPR ? `<text class="ex-prl" x="${q.x.toFixed(1)}" y="${(q.y - 13).toFixed(1)}">PR</text>` : '');
+    }).join('');
+    return area + line + dots;
   }).join('');
-
-  return `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
-    <defs>
-      <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="var(--ac)" stop-opacity=".35"/>
-        <stop offset="100%" stop-color="var(--ac)" stop-opacity="0"/>
-      </linearGradient>
-    </defs>
-    <path d="${area}" fill="url(#cg)"/>
-    <path d="${line}" fill="none" stroke="var(--ac)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-    ${coords.filter(c => c.n > 0).map(c =>
-      `<circle cx="${c.x}" cy="${c.y}" r="3.5" fill="var(--ac)" stroke="var(--bg)" stroke-width="1.5"/>`
-    ).join('')}
-    ${labels}
-  </svg>`;
+  CH[id] = { W, L, R, X, Y, t0: o.t0, t1: o.t0 + span, series: o.series, anchor: o.series.length ? o.series[0].pts.map(p => p[0]) : [], tip: o.tip };
+  return `<div class="lc${o.still ? '' : ' draw'}" id="${id}">
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.label || 'Gráfico')}">
+      <defs><linearGradient id="${id}-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" style="stop-color:var(--ac);stop-opacity:.28"/><stop offset="100%" style="stop-color:var(--ac);stop-opacity:0"/></linearGradient></defs>
+      ${g}${body}
+      <g class="lc-cur" style="display:none"><line class="lc-cl" y1="${T}" y2="${T + ih}" x1="0" x2="0"/>${o.series.map(s => `<circle r="4.5" cx="0" cy="0" style="fill:${s.c}"/>`).join('')}</g>
+    </svg><div class="lc-tip" hidden></div></div>`;
+}
+function bindChart(id) {
+  const box = document.getElementById(id), c = CH[id];
+  if (!box || !c || !c.anchor.length) return;
+  const svg = box.querySelector('svg'), cur = svg.querySelector('.lc-cur'), line = cur.querySelector('.lc-cl'), dots = [...cur.querySelectorAll('circle')], tip = box.querySelector('.lc-tip');
+  const move = ev => {
+    const r = svg.getBoundingClientRect(), vx = (ev.clientX - r.left) / r.width * c.W;
+    const t = c.t0 + (vx - c.L) / (c.W - c.L - c.R) * (c.t1 - c.t0);
+    let bi = 0, bd = Infinity;
+    c.anchor.forEach((a, i) => { const d = Math.abs(a - t); if (d < bd) { bd = d; bi = i; } });
+    const x = c.X(c.anchor[bi]);
+    line.setAttribute('x1', x); line.setAttribute('x2', x);
+    c.series.forEach((s, i) => { dots[i].setAttribute('cx', x); dots[i].setAttribute('cy', c.Y(s.pts[bi][1])); });
+    cur.style.display = '';
+    tip.innerHTML = c.tip(bi); tip.hidden = false;
+    tip.style.left = Math.min(Math.max(x / c.W * 100, 24), 76) + '%';
+  };
+  svg.addEventListener('pointerdown', move);
+  svg.addEventListener('pointermove', move);
+  svg.addEventListener('pointerleave', ev => { if (ev.pointerType === 'mouse') { cur.style.display = 'none'; tip.hidden = true; } });
 }
 
-function goalRing(name, target, current) {
-  const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
-  const r = 28, c = 2 * Math.PI * r;
-  const offset = c - (pct / 100) * c;
-  return `<div class="goal-ring">
+/* ===== Resumen general (acumulado) ===== */
+function fmtTon(kg) {
+  if (S.settings.units === 'lbs') { const l = kg * 2.20462; return l >= 2000 ? (l / 2000).toFixed(1) + ' ton' : Math.round(l) + ' lbs'; }
+  return kg >= 1000 ? (kg / 1000).toFixed(1) + ' ton' : Math.round(kg) + ' kg';
+}
+function fmtHM(s) { const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + ':' + String(m).padStart(2, '0') + ' h' : m + ' min'; }
+function ovFmt(k, v) {
+  if (k === 'vol') return fmtTon(v);
+  if (k === 'max') return fmtWeight(v);
+  if (k === 'secs') return fmtHM(v);
+  return Math.round(v).toLocaleString('es');
+}
+function ovDelta(k, cv, pv) {
+  const diff = cv - pv;
+  if (Math.abs(diff) < 1e-9) return '<small class="dl eq">(sin cambios)</small>';
+  const sg = diff > 0 ? '+' : '-', pct = pv > 0 ? Math.round(Math.abs(diff) / pv * 100) + '%' : 'nuevo';
+  return `<small class="dl ${diff > 0 ? 'up' : 'down'}">(${sg}${ovFmt(k, Math.abs(diff))}/${diff < 0 && pv > 0 ? '-' : ''}${pct})</small>`;
+}
+function dayAgg() {
+  const m = {};
+  S.logs.forEach(l => {
+    const o = m[l.date] || (m[l.date] = { w: 0, vol: 0, reps: 0, sets: 0, max: 0, secs: 0 });
+    o.w++; o.secs += l.dur || 0;
+    (l.entries || []).forEach(e => (e.sets || []).forEach(s => {
+      const r = parseInt(s.reps) || 0, k = num(s.kg);
+      o.vol += k * r; o.reps += r; o.sets++; o.max = Math.max(o.max, k);
+    }));
+  });
+  return m;
+}
+function sumRange(agg, a, b) {
+  const t = { w: 0, vol: 0, reps: 0, sets: 0, max: 0, secs: 0 };
+  for (const d in agg) if (d >= a && d <= b) {
+    const o = agg[d];
+    t.w += o.w; t.vol += o.vol; t.reps += o.reps; t.sets += o.sets; t.secs += o.secs; t.max = Math.max(t.max, o.max);
+  }
+  return t;
+}
+function setOvRange(v) { ovRange = +v; paintOverview(true); }
+function toggleOv(k) {
+  if (ovHidden.has(k)) ovHidden.delete(k);
+  else if (ovHidden.size < OV.length - 1) ovHidden.add(k);
+  paintOverview(false);
+}
+function paintOverview(anim) {
+  const box = $('#ov-chart');
+  if (!box) return;
+  const agg = dayAgg(), keys = Object.keys(agg).sort();
+  const today = new Date(); today.setHours(12, 0, 0, 0);
+  let fromD = ovRange ? addDays(today, -(ovRange - 1)) : keys.length ? new Date(keys[0] + 'T12:00:00') : today;
+  if (!ovRange && (today - fromD) / 864e5 < 6) fromD = addDays(today, -6);
+  const from = dkey(fromD), to = dkey(today), cur = sumRange(agg, from, to);
+  if (!cur.w) { box.innerHTML = '<div class="chart-empty">Aún no hay entrenamientos en este periodo.<br>Termina una sesión y verás tu progreso aquí.</div>'; return; }
+  const prev = ovRange ? sumRange(agg, dkey(addDays(fromD, -ovRange)), dkey(addDays(fromD, -1))) : null;
+  const days = [];
+  for (const d = new Date(fromD); dkey(d) <= to; d.setDate(d.getDate() + 1)) days.push(dkey(d));
+  const ts = days.map(k => new Date(k + 'T12:00:00').getTime());
+  const run = { w: 0, vol: 0, reps: 0, sets: 0, max: 0, secs: 0 }, cum = Object.fromEntries(OV.map(m => [m.k, []]));
+  days.forEach(k => {
+    const o = agg[k];
+    if (o) { run.w += o.w; run.vol += o.vol; run.reps += o.reps; run.sets += o.sets; run.secs += o.secs; run.max = Math.max(run.max, o.max); }
+    OV.forEach(m => cum[m.k].push(run[m.k]));
+  });
+  const vis = OV.filter(m => !ovHidden.has(m.k));
+  const series = vis.map(m => ({ c: m.c, pts: ts.map((t, i) => [t, cur[m.k] ? cum[m.k][i] / cur[m.k] * 100 : 0]) }));
+  const chart = lineChart('ov-lc', {
+    t0: ts[0], t1: ts[ts.length - 1], yr: { lo: 0, hi: 100, step: 20 }, yFmt: v => v, series, dots: false, still: !anim,
+    label: 'Progreso acumulado en el periodo',
+    tip: i => `<b>${new Date(ts[i]).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' }).replace('.', '')}</b><div class="tp-g">${vis.map(m => `<span><i style="background:${m.c}"></i>${ovFmt(m.k, cum[m.k][i])}</span>`).join('')}</div>`
+  });
+  const legend = OV.map(m => `<button type="button" class="lg${ovHidden.has(m.k) ? ' off' : ''}" aria-pressed="${!ovHidden.has(m.k)}" onclick="toggleOv('${m.k}')">
+    <i class="lg-sw" style="background:${m.c}"></i><span>${m.l}: <b>${ovFmt(m.k, cur[m.k])}</b>${prev ? ovDelta(m.k, cur[m.k], prev[m.k]) : ''}</span></button>`).join('');
+  box.innerHTML = `<p class="lc-cap">Evolución acumulada · cada línea llega al 100% de su total del periodo</p>${chart}
+    <div class="ov-legend">${legend}</div>${prev ? '<p class="hint" style="margin:12px 0 0">Los cambios comparan con el periodo anterior de igual duración. Toca un dato para ocultar o mostrar su línea.</p>' : ''}`;
+  bindChart('ov-lc');
+}
+
+/* ===== Progreso por ejercicio ===== */
+function xpNames() {
+  const seen = new Map();
+  S.customEx.forEach(e => seen.set(norm(e.name), e.name));
+  S.logs.forEach(l => (l.entries || []).forEach(e => { if (!seen.has(norm(e.name))) seen.set(norm(e.name), e.name); }));
+  return [...seen.values()].sort((a, b) => a.localeCompare(b, 'es'));
+}
+function xpHistory(name) {
+  const n = norm(name), by = {};
+  S.logs.forEach(l => (l.entries || []).forEach(e => {
+    if (norm(e.name) !== n) return;
+    (e.sets || []).forEach(s => {
+      const k = num(s.kg), r = parseInt(s.reps) || 0;
+      if (k <= 0 || r <= 0) return;
+      const o = by[l.date] || (by[l.date] = { date: l.date, kg: 0, rm: 0, reps: 0 });
+      if (k > o.kg) { o.kg = k; o.reps = r; }
+      o.rm = Math.max(o.rm, r === 1 ? k : k * (1 + Math.min(r, 12) / 30)); // Epley
+    });
+  }));
+  return Object.values(by).sort((a, b) => a.date.localeCompare(b.date));
+}
+function xpTabs() {
+  return `<div class="chart-range" role="group" aria-label="Periodo">${XP_RANGES.map(r => `<button class="${xpRange === r.d ? 'on' : ''}" aria-pressed="${xpRange === r.d}" onclick="setXpRange(${r.d})">${r.l}</button>`).join('')}</div>`;
+}
+function setXpRange(d) { xpRange = d; $('#xp-tabs').innerHTML = xpTabs(); paintXP(true); }
+function setXpName(v) { xpName = v; paintXP(true); }
+function paintXP(anim) {
+  const box = $('#xp-chart');
+  if (!box) return;
+  if (!xpName) { box.innerHTML = '<div class="empty" style="margin:0"><strong>Sin ejercicios aún</strong><span>Crea ejercicios en Perfil → Mis ejercicios o agrégalos al entrenar. Aquí verás el progreso de cada uno.</span></div>'; return; }
+  const all = xpHistory(xpName), today = new Date(); today.setHours(12, 0, 0, 0);
+  const fromD = xpRange ? addDays(today, -(xpRange - 1)) : null, from = fromD ? dkey(fromD) : '';
+  const h = all.filter(p => p.date >= from);
+  const rec = findEx(xpName), tags = rec ? `<div class="muscle-tags" style="margin:0 0 12px">${exTags(rec)}</div>` : '';
+  if (!h.length) { box.innerHTML = tags + `<div class="chart-empty">${all.length ? 'Sin series con peso en este periodo. Prueba un rango mayor.' : 'Aún no registras series con peso para este ejercicio.'}</div>`; return; }
+  const ts = h.map(p => new Date(p.date + 'T12:00:00').getTime()), t1 = today.getTime();
+  const t0 = fromD ? fromD.getTime() : Math.min(ts[0], t1 - 29 * 864e5);
+  let best = 0; const prSet = new Set();
+  all.forEach((p, i) => { if (i > 0 && p.kg > best) prSet.add(p.date); best = Math.max(best, p.kg); });
+  const kgS = h.map(p => toDisplay(p.kg)), rmS = h.map(p => toDisplay(p.rm));
+  const yr = niceRange(Math.min(...kgS) * .88, Math.max(...rmS) * 1.06);
+  const series = [
+    { c: '#60a5fa', dash: true, smooth: true, pts: h.map((p, i) => [ts[i], rmS[i]]) },
+    { c: 'var(--ac)', smooth: true, area: true, pr: true, pts: h.map((p, i) => [ts[i], kgS[i], prSet.has(p.date)]) }
+  ];
+  const chart = lineChart('xp-lc', {
+    t0, t1, yr, yFmt: v => +v.toFixed(1), series, still: !anim, label: 'Progreso de ' + xpName,
+    tip: i => `<b>${new Date(ts[i]).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' }).replace('.', '')}</b><div class="tp-col"><span><i style="background:var(--ac)"></i>Máx. ${fmtWeight(h[i].kg)} × ${h[i].reps}${prSet.has(h[i].date) ? ' · PR' : ''}</span><span><i style="background:#60a5fa"></i>1RM est. ${fmtWeight(h[i].rm)}</span></div>`
+  });
+  const rec1 = Math.max(...h.map(p => p.kg)), gain = h.length > 1 ? h[h.length - 1].kg - h[0].kg : null;
+  box.innerHTML = `${tags}${chart}
+    <div class="xp-leg"><span><i style="background:var(--ac)"></i>Peso máximo por sesión (${unitLabel()})</span><span><i class="dash"></i>1RM estimado</span></div>
+    <div class="ex-kpis">
+      <div class="ex-kpi pr"><b>${fmtWeight(rec1)}</b><span>Récord</span></div>
+      <div class="ex-kpi"><b>${h.length}</b><span>Sesiones</span></div>
+      <div class="ex-kpi"><b>${gain === null ? '—' : (gain > 0 ? '+' : '') + fmtWeight(gain)}</b><span>Mejora en el periodo</span></div>
+    </div>
+    <button type="button" class="btn g" data-ex="${esc(xpName)}" onclick="openExProgress(this.dataset.ex)">Ver calendario y detalle ›</button>`;
+  bindChart('xp-lc');
+}
+
+/* ===== Objetivos ===== */
+function bestKg(name) {
+  const n = norm(name); let m = 0;
+  S.logs.forEach(l => (l.entries || []).forEach(e => { if (norm(e.name) === n) (e.sets || []).forEach(s => { m = Math.max(m, num(s.kg)); }); }));
+  return m;
+}
+function goalRing(g, i) {
+  const cur = bestKg(g.name), pct = g.target > 0 ? Math.min(100, Math.round(cur / g.target * 100)) : 0, col = GOAL_COLORS[i % GOAL_COLORS.length];
+  const r = 28, c = 2 * Math.PI * r, off = c - pct / 100 * c;
+  return `<button type="button" class="goal-ring" onclick="openGoalModal(${i})" aria-label="Editar objetivo ${esc(g.name)}">
     <svg viewBox="0 0 72 72">
       <circle cx="36" cy="36" r="${r}" fill="none" stroke="var(--line)" stroke-width="6"/>
-      <circle cx="36" cy="36" r="${r}" fill="none" stroke="var(--ac)" stroke-width="6"
-        stroke-dasharray="${c}" stroke-dashoffset="${offset}" stroke-linecap="round"
-        transform="rotate(-90 36 36)" style="transition:stroke-dashoffset .4s"/>
+      <circle class="gr-arc" cx="36" cy="36" r="${r}" fill="none" stroke="${col}" stroke-width="6" stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}" stroke-linecap="round" transform="rotate(-90 36 36)" style="--c:${c.toFixed(2)}"/>
       <text x="36" y="40" text-anchor="middle" fill="var(--tx)" font-size="14" font-weight="700">${pct}%</text>
     </svg>
-    <span class="lbl">${esc(name)}<br><span style="color:var(--ac)">${fmtWeight(current)}</span> / ${fmtWeight(target)}</span>
-  </div>`;
+    <span class="lbl"><b>${esc(g.name)}</b><br>${fmtWeight(cur)} / ${fmtWeight(g.target)}</span></button>`;
+}
+function openGoalModal(i) {
+  goalEdit = typeof i === 'number' ? i : -1;
+  const g = goalEdit >= 0 ? S.goals[goalEdit] : null;
+  $('#exlist-goal').innerHTML = xpNames().map(n => `<option value="${esc(n)}">`).join('');
+  $('#goal-title').textContent = g ? 'Editar objetivo' : 'Nuevo objetivo';
+  $('#goal-name').value = g ? g.name : '';
+  $('#goal-target').value = g ? toDisplay(g.target) : '';
+  $('#goal-unit-lbl').textContent = unitLabel();
+  $('#goal-del').hidden = !g;
+  $('#goal-modal').hidden = false;
+}
+function closeGoalModal() { $('#goal-modal').hidden = true; }
+function saveGoal() {
+  const raw = $('#goal-name').value.replace(/\s+/g, ' ').trim(), targetDisp = num($('#goal-target').value);
+  if (!raw || !targetDisp) { toast('Completa ejercicio y peso objetivo'); return; }
+  const ex = findEx(raw), name = ex ? ex.name : raw, target = fromDisplay(targetDisp);
+  const dup = S.goals.findIndex(g => norm(g.name) === norm(name));
+  if (goalEdit >= 0) { S.goals[goalEdit] = { name, target }; if (dup >= 0 && dup !== goalEdit) S.goals.splice(dup, 1); }
+  else if (dup >= 0) S.goals[dup].target = target;
+  else S.goals.push({ name, target });
+  saveLogs(); closeGoalModal(); renderStats();
+}
+function delGoal() {
+  if (goalEdit < 0 || !confirm('¿Eliminar este objetivo?')) return;
+  S.goals.splice(goalEdit, 1);
+  saveLogs(); closeGoalModal(); renderStats();
 }
 
+/* ===== Render de Estadísticas ===== */
 function renderStats() {
   const root = $('#stats-root');
   if (!root) return;
-  const { vol, reps, sets, secs, maxByEx } = computeStats();
-  const hours = (secs / 3600).toFixed(1);
-  const volStr = vol >= 1000 ? (vol / 1000).toFixed(1) + ' ton' : Math.round(vol) + ' kg';
-  // convert volume display if lbs
-  let volDisplay = volStr;
-  if (S.settings.units === 'lbs' && vol < 1000) {
-    volDisplay = Math.round(vol * 2.20462) + ' lbs';
-  } else if (S.settings.units === 'lbs' && vol >= 1000) {
-    volDisplay = ((vol * 2.20462) / 2000).toFixed(1) + ' ton';
+  const { maxByEx } = computeStats(), names = xpNames();
+  if (!xpName || !names.includes(xpName)) {
+    let top = names[0] || null, n = -1;
+    names.forEach(x => { const c = xpHistory(x).length; if (c > n) { n = c; top = x; } });
+    xpName = top;
   }
-
   root.innerHTML = `
-    <div class="kpi-grid">
-      <div class="kpi"><div class="ico">🏋️</div><b>${volDisplay}</b><span>Volumen total</span></div>
-      <div class="kpi"><div class="ico">🔄</div><b data-count="${reps}">${reps.toLocaleString('es')}</b><span>Repeticiones</span></div>
-      <div class="kpi"><div class="ico">✅</div><b data-count="${sets}">${sets.toLocaleString('es')}</b><span>Series completadas</span></div>
-      <div class="kpi"><div class="ico">⏱</div><b>${hours} h</b><span>Horas entrenadas</span></div>
+    <div class="card ov-card">
+      <div class="ov-hd"><strong>Resumen</strong>
+        <label class="rng"><select onchange="setOvRange(this.value)" aria-label="Periodo">${OV_RANGES.map(r => `<option value="${r.d}"${r.d === ovRange ? ' selected' : ''}>${r.l}</option>`).join('')}</select></label>
+      </div>
+      <div id="ov-chart"></div>
+    </div>
+
+    <div class="goals-card">
+      <div class="goals-hd"><h3>Mis objetivos</h3><button type="button" class="goal-plus" onclick="openGoalModal()" aria-label="Agregar objetivo">+</button></div>
+      <div class="goals-row">${S.goals.length ? S.goals.map(goalRing).join('')
+        : '<p class="mu" style="font-size:.85rem;text-align:center;width:100%;margin:0">Fija una meta de peso en un ejercicio con el botón +</p>'}</div>
+    </div>
+
+    <div class="chart-card xp-card">
+      <div class="chart-hd"><strong>Progreso por ejercicio</strong><div id="xp-tabs">${xpTabs()}</div></div>
+      ${names.length ? `<label class="rng full"><select class="xp-sel" onchange="setXpName(this.value)" aria-label="Ejercicio">${names.map(n => {
+        const c = xpHistory(n).length;
+        return `<option value="${esc(n)}"${n === xpName ? ' selected' : ''}>${esc(n)}${c ? ' · ' + c + (c > 1 ? ' sesiones' : ' sesión') : ' · sin datos'}</option>`;
+      }).join('')}</select></label>` : ''}
+      <div id="xp-chart"></div>
     </div>
 
     ${radarCard()}
     ${rankCard()}
-
-    <div class="chart-card">
-      <div class="chart-hd">
-        <strong>Entrenamientos</strong>
-        <div class="chart-range">
-          <button class="${chartDays === 30 ? 'on' : ''}" onclick="chartDays=30;renderStats()">30 días</button>
-          <button class="${chartDays === 90 ? 'on' : ''}" onclick="chartDays=90;renderStats()">90 días</button>
-        </div>
-      </div>
-      ${chartSVG(chartDays)}
-    </div>
-
-    <div class="goals-card">
-      <h3>Mis Objetivos</h3>
-      <div class="goals-row">
-        ${S.goals.length
-          ? S.goals.map(g => goalRing(g.name, g.target, maxByEx[g.name] || 0)).join('')
-          : '<p class="mu" style="font-size:.85rem;text-align:center;width:100%">Sin objetivos aún</p>'}
-      </div>
-      <button class="btn g goal-add" onclick="openGoalModal()">+ Agregar objetivo</button>
-    </div>
 
     <div class="records-card">
       <h3>Récords personales</h3>
@@ -1083,30 +1401,9 @@ function renderStats() {
         : '<p class="mu" style="font-size:.85rem;text-align:center">Completa entrenamientos para ver récords</p>'}
     </div>
   `;
+  paintOverview(true);
+  paintXP(true);
   afterRender(root);
-}
-
-/* Objetivos */
-function openGoalModal() {
-  const names = [...new Set([...allExercises().map(e => e.name), ...S.logs.flatMap(l => l.entries.map(e => e.name))])];
-  $('#exlist-goal').innerHTML = names.map(n => `<option value="${esc(n)}">`).join('');
-  $('#goal-name').value = '';
-  $('#goal-target').value = '';
-  $('#goal-unit-lbl').textContent = unitLabel();
-  $('#goal-modal').hidden = false;
-}
-function closeGoalModal() { $('#goal-modal').hidden = true; }
-function saveGoal() {
-  const name = $('#goal-name').value.trim();
-  const targetDisp = num($('#goal-target').value);
-  if (!name || !targetDisp) { alert('Completa ejercicio y peso objetivo'); return; }
-  const target = fromDisplay(targetDisp); // store in kg
-  const existing = S.goals.find(g => g.name.toLowerCase() === name.toLowerCase());
-  if (existing) existing.target = target;
-  else S.goals.push({ name, target });
-  saveLogs();
-  closeGoalModal();
-  renderStats();
 }
 
 /* ===== Paso 5: Perfil / Ajustes ===== */
@@ -1122,9 +1419,11 @@ function renderProfile() {
     <div class="set-card">
       <h3>Resumen</h3>
       <div class="rec-row"><span class="name">Entrenamientos guardados</span><span class="val">${nLogs}</span></div>
-      <div class="rec-row"><span class="name">Ejercicios personalizados</span><span class="val">${nCustom}</span></div>
+      <div class="rec-row"><span class="name">Ejercicios en mi base</span><span class="val">${nCustom}</span></div>
       <div class="rec-row"><span class="name">Objetivos activos</span><span class="val">${S.goals.length}</span></div>
     </div>
+
+    ${dbCard()}
 
     <div class="set-card">
       <h3>Tu nombre</h3>
@@ -1211,10 +1510,12 @@ function handleImport(ev) {
       S.customEx = data.customEx || [];
       S.settings = data.settings || S.settings;
       S.goals = data.goals || S.goals;
+      S.dbMigrated = !!data.dbMigrated;
+      migrateDB();
       saveLogs();
       applyTheme(S.settings.theme || 'oled');
       alert('Datos importados correctamente');
-      renderProfile();
+      renderProfile(); renderHome();
     } catch (e) {
       alert('Error al importar: archivo inválido');
     }
@@ -1225,7 +1526,7 @@ function handleImport(ev) {
 function clearData() {
   if (!confirm('¿Borrar TODOS los datos? Esta acción no se puede deshacer.')) return;
   if (!confirm('Confirma de nuevo: se eliminarán logs, rutinas, objetivos y ejercicios personalizados.')) return;
-  S = { logs: [], plan: {}, customEx: [], settings: S.settings, goals: [] };
+  S = { logs: [], plan: {}, customEx: [], settings: S.settings, goals: [], dbMigrated: true };
   saveLogs();
   ss = null; saveS();
   toast('Datos borrados');
@@ -1284,7 +1585,7 @@ function exCard(e, i) {
 
 function renderTrain() {
   const root = $('#train-root'), v = root.closest('.view'), sc = v.scrollTop;
-  const names = [...new Set([...allExercises().map(e => e.name), ...S.logs.flatMap(l => l.entries.map(e => e.name))])];
+  const names = S.customEx.map(e => e.name).sort((a, b) => a.localeCompare(b, 'es'));
   const dl = `<datalist id="exlist">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>`;
   if (!ss) {
     root.innerHTML = `<header class="vh"><h1>Entrenar</h1><p>Inicio rápido</p></header>
@@ -1296,7 +1597,7 @@ function renderTrain() {
   <span class="clk" id="g-time">00:00</span><button class="btn fin" onclick="finish()">Finalizar</button></div>`;
     if (!ss.entries.length) h += `<div class="empty"><strong>Sesión vacía</strong><span>Agrega tu primer ejercicio abajo.</span></div>`;
   ss.entries.forEach((e, i) => h += exCard(e, i));
-  h += `${dl}<div class="addx"><input class="inp l" id="nx" list="exlist" placeholder="Nombre del ejercicio" maxlength="40" onkeydown="if(event.key==='Enter')addEx()"></div>
+  h += `${dl}<div class="addx"><input class="inp l" id="nx" list="exlist" placeholder="Busca en tu base o escribe uno nuevo" maxlength="40" onkeydown="if(event.key==='Enter')addEx()"></div>
  <button class="btn" onclick="addEx()">+ Agregar ejercicio</button><div style="height:110px"></div>
  <div class="rbar" id="rbar"><div onclick="startRest(90)"><small id="rl">Descanso automático</small><div class="big" id="rt">--:--</div></div>
  <div class="b"><button class="btn g s" onclick="adj(30)">+30s</button><button class="btn g s" onclick="startRest(60)">60s</button><button class="btn g s" onclick="startRest(90)">90s</button><button class="x" onclick="startRest(0)" aria-label="Saltar descanso">✕</button></div></div>`;
@@ -1325,14 +1626,11 @@ function startSess(fromPlan = false) {
   saveS(); renderTrain(); lock();
 }
 function addEx() {
-  const n = $('#nx').value.trim();
-  if (!n) return;
-  const l = lastSets(n);
-  const sets = l && l.length ? l.map(s => ({ t: 'E', kg: s.kg, reps: s.reps, done: false })) : [0, 1, 2].map(() => ({ t: 'E', kg: '', reps: '', done: false }));
-  ss.entries.push({ name: n, rest: 90, sets });
-  saveS(); renderTrain();
-  const c = document.querySelectorAll('.ex');
-  c[c.length - 1].scrollIntoView({ block: 'center' });
+  const n = $('#nx').value.replace(/\s+/g, ' ').trim();
+  if (!n) { toast('Escribe el nombre del ejercicio'); return; }
+  const ex = findEx(n);
+  if (ex) addToSession(ex.name);
+  else openExModal('train', n);   // nuevo: pide nombre claro y músculos
 }
 function rmEx(i) { if (!confirm('¿Quitar este ejercicio?')) return; ss.entries.splice(i, 1); saveS(); renderTrain(); }
 function addS(i) {
@@ -1458,17 +1756,15 @@ document.addEventListener('visibilitychange', lock);
 
 /* Modales */
 $('#start-modal').addEventListener('click', e => { if (e.target.id === 'start-modal') closeStartModal(); });
-$('#custom-modal').addEventListener('click', e => { if (e.target.id === 'custom-modal') closeCustomModal(); });
 $('#goal-modal').addEventListener('click', e => { if (e.target.id === 'goal-modal') closeGoalModal(); });
 $('#log-modal').addEventListener('click', e => { if (e.target.id === 'log-modal') closeLogModal(); });
-$('#manual-modal').addEventListener('click', e => { if (e.target.id === 'manual-modal') closeManualModal(); });
+$('#ex-modal').addEventListener('click', e => { if (e.target.id === 'ex-modal') closeExModal(); });
 addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (!$('#start-modal').hidden) closeStartModal();
-    if (!$('#custom-modal').hidden) closeCustomModal();
     if (!$('#goal-modal').hidden) closeGoalModal();
     if (!$('#log-modal').hidden) closeLogModal();
-    if (!$('#manual-modal').hidden) closeManualModal();
+    if (!$('#ex-modal').hidden) closeExModal();
   }
 });
 

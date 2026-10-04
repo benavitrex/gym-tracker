@@ -103,43 +103,27 @@
   </div>
 </div>
 
-<!-- Modal ejercicio personalizado -->
-<div class="modal-bg" id="custom-modal" hidden>
-  <div class="modal" role="dialog" aria-modal="true">
-    <h2>Ejercicio personalizado</h2>
-    <p>Define nombre y músculos involucrados</p>
-    <label>Nombre</label>
-    <input class="inp l" id="custom-name" maxlength="40" placeholder="Ej. Face pull con banda">
-    <label>Categoría principal</label>
-    <div class="chips" id="custom-cat"></div>
-    <label>Músculos principales</label>
-    <div class="chips" id="custom-pri"></div>
-    <label>Músculos secundarios</label>
-    <div class="chips" id="custom-sec"></div>
-    <div class="actions" style="margin-top:16px">
-      <button class="btn g" onclick="closeCustomModal()">Cancelar</button>
-      <button class="btn" onclick="saveCustomEx()">Guardar</button>
+<!-- Modal ejercicio (alta en tu base, o añadir a día/sesión) -->
+<div class="modal-bg" id="ex-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="xm-title">
+    <h2 id="xm-title">Nuevo ejercicio</h2>
+    <p id="xm-sub">Ponle un nombre claro y marca qué músculos trabaja.</p>
+    <label for="xm-name">Nombre del ejercicio</label>
+    <input class="inp l" id="xm-name" list="exlist-x" maxlength="40" autocomplete="off" placeholder="Ej. Press inclinado con mancuernas"
+      oninput="onExName()" onkeydown="if(event.key==='Enter')saveExModal()">
+    <datalist id="exlist-x"></datalist>
+    <div class="detect" id="xm-detect" aria-live="polite"></div>
+    <div id="xm-muscles">
+      <label>Músculo principal</label>
+      <div class="chips" id="xm-pri"></div>
+      <label>Músculos secundarios (opcional)</label>
+      <div class="chips" id="xm-sec"></div>
     </div>
-  </div>
-</div>
-
-
-<!-- Modal ejercicio a mano -->
-<div class="modal-bg" id="manual-modal" hidden>
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="man-title">
-    <h2 id="man-title">Añadir ejercicio a mano</h2>
-    <p>Escribe cualquier nombre; lo clasifico por ti.</p>
-    <label for="man-name">Nombre del ejercicio</label>
-    <input class="inp l" id="man-name" list="exlist-man" maxlength="40" autocomplete="off" placeholder="Ej. Press inclinado multipower"
-      oninput="onManualInput()" onkeydown="if(event.key==='Enter')saveManualEx()">
-    <datalist id="exlist-man"></datalist>
-    <div class="detect" id="man-detect" aria-live="polite"></div>
-    <label>Grupo muscular (opcional)</label>
-    <div class="chips" id="man-cat"></div>
     <div class="actions" style="margin-top:16px">
-      <button class="btn g" onclick="closeManualModal()">Cancelar</button>
-      <button class="btn" onclick="saveManualEx()">Añadir al día</button>
+      <button class="btn g" onclick="closeExModal()">Cancelar</button>
+      <button class="btn" id="xm-save" onclick="saveExModal()">Guardar</button>
     </div>
+    <button class="btn g xm-del" id="xm-del" hidden onclick="delExModal()">Eliminar de mi base</button>
   </div>
 </div>
 
@@ -157,10 +141,10 @@
 <!-- Modal objetivo -->
 <div class="modal-bg" id="goal-modal" hidden>
   <div class="modal" role="dialog" aria-modal="true">
-    <h2>Nuevo objetivo</h2>
+    <h2 id="goal-title">Nuevo objetivo</h2>
     <p>Meta de peso máximo en un ejercicio</p>
     <label>Ejercicio</label>
-    <input class="inp l" id="goal-name" list="exlist-goal" maxlength="40" placeholder="Ej. Sentadilla">
+    <input class="inp l" id="goal-name" list="exlist-goal" maxlength="40" placeholder="Elige un ejercicio de tu base">
     <datalist id="exlist-goal"></datalist>
     <label>Peso objetivo (<span id="goal-unit-lbl">kg</span>)</label>
     <input class="inp" id="goal-target" inputmode="decimal" placeholder="100">
@@ -168,6 +152,7 @@
       <button class="btn g" onclick="closeGoalModal()">Cancelar</button>
       <button class="btn" onclick="saveGoal()">Guardar</button>
     </div>
+    <button class="btn g xm-del" id="goal-del" hidden onclick="delGoal()">Eliminar objetivo</button>
   </div>
 </div>
 
