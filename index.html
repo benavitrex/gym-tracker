@@ -42,18 +42,9 @@
 
   <!-- 4. PROGRAMAS -->
   <section class="view" data-view="programs" aria-labelledby="t-programs" hidden>
-    <header class="vh"><h1 id="t-programs">Programas</h1><p>Rutinas y ejercicios</p></header>
-    <div class="seg" role="tablist">
-      <button role="tab" class="active" data-seg="routines" aria-selected="true">Rutinas</button>
-      <button role="tab" data-seg="gallery" aria-selected="false">Ejercicios</button>
-    </div>
-    <div class="panel" data-panel="routines">
-      <p class="hint">Programa tu semana. El día de hoy se carga automáticamente al entrenar.</p>
-      <div id="programs-week"></div>
-    </div>
-    <div class="panel" data-panel="gallery" hidden>
-      <div id="gallery-root"></div>
-    </div>
+    <header class="vh"><h1 id="t-programs">Programas</h1><p>Tu semana de entrenamiento</p></header>
+    <p class="hint">Toca un día para ver o editar su rutina. El de hoy se carga automáticamente al entrenar.</p>
+    <div id="programs-week"></div>
   </section>
 
   <!-- 5. PERFIL -->
@@ -73,6 +64,18 @@
 <button class="resume" id="resume" hidden onclick="show('train')"><i aria-hidden="true"></i><span>Entrenamiento en curso</span><b id="resume-c">00:00</b></button>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- Push screen: detalle del día -->
+<section class="day-screen" id="day-screen" hidden aria-label="Detalle del día">
+  <header class="ds-hd">
+    <button class="ds-back" onclick="closeDay()">← Volver</button>
+    <span class="today-pill" id="day-today" hidden>Hoy</span>
+  </header>
+  <div class="ds-scroll" id="day-scroll">
+    <h1 id="day-name"></h1>
+    <div id="day-body"></div>
+  </div>
+</section>
 
 
 <!-- Modal inicio -->

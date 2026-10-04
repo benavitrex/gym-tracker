@@ -29,7 +29,8 @@ const saveS = () => { try { ss ? localStorage.setItem('gt_s', JSON.stringify(ss)
 const saveLogs = () => { try { localStorage.setItem('gt', JSON.stringify(S)); } catch (e) {} };
 
 let R = { end: 0, fin: false }, AC = null, wl = null;
-let mapSide = 'front', galCat = 'all', galEquip = 'all', galQ = '', chartDays = 30;
+let mapSide = 'front', chartDays = 30;
+let openDayKey = null, dayCloseTimer = null;
 let calYear = new Date().getFullYear(), calMonth = new Date().getMonth(); // 0-11
 let selectedMuscle = null;
 
@@ -255,7 +256,7 @@ function homeMapInner() {
   return `<div class="map-hd"><h3>Músculos trabajados</h3>${rangeTabs(homeRange, 'setHomeRange')}</div>
     <div class="map-svg-box">${muscleSVG(mapSide, heat)}</div>
     <div class="map-foot"><div class="map-tog"><button class="${mapSide === 'front' ? 'on' : ''}" onclick="mapSide='front';refreshHomeMap()">Frente</button><button class="${mapSide === 'back' ? 'on' : ''}" onclick="mapSide='back';refreshHomeMap()">Espalda</button></div><div class="ramp"><span>Menos</span><i></i><span>Más</span></div></div>
-    <p class="hint" style="text-align:center;margin:8px 0 0">${has ? 'Toca un músculo para ver sus ejercicios.' : 'Registra un entrenamiento y el mapa se iluminará.'}</p>`;
+    <p class="hint" style="text-align:center;margin:8px 0 0">${has ? 'Toca un músculo para resaltarlo.' : 'Registra un entrenamiento y el mapa se iluminará.'}</p>`;
 }
 function refreshHomeMap() { const el = $('#hmap'); if (el) el.innerHTML = homeMapInner(); }
 function animateRadar() {
@@ -319,6 +320,7 @@ function homeRecent() {
 /* ===== Navegación ===== */
 function show(name) {
   if (!VIEWS.includes(name)) name = 'home';
+  if (name !== 'programs' && openDayKey) closeDay();
   document.body.classList.toggle('in-train', name === 'train');
   $$('.view').forEach(v => (v.hidden = v.dataset.view !== name));
   $$('.nav-btn').forEach(b => {
@@ -328,32 +330,17 @@ function show(name) {
   });
   document.getElementById('views').scrollTop = 0;
   if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
-  if (name === 'programs') {
-    const activeSeg = $$('.seg button.active')[0]?.dataset.seg || 'routines';
-    if (activeSeg === 'routines') renderWeek(); else renderGallery();
-  }
+  if (name === 'programs') renderWeek();
   if (name === 'home') renderHome();
   if (name === 'train') renderTrain();
   if (name === 'stats') renderStats();
   if (name === 'profile') renderProfile();
 }
 
-function showSeg(name) {
-  $$('.seg button').forEach(b => {
-    const on = b.dataset.seg === name;
-    b.classList.toggle('active', on);
-    b.setAttribute('aria-selected', on);
-  });
-  $$('.panel').forEach(p => (p.hidden = p.dataset.panel !== name));
-  if (name === 'gallery') renderGallery();
-  if (name === 'routines') renderWeek();
-}
-
 $$('.nav-btn').forEach(b => b.addEventListener('click', () => {
   if (b.dataset.go === 'train' && !ss) openStartModal();
   else show(b.dataset.go);
 }));
-$$('.seg button').forEach(b => b.addEventListener('click', () => showSeg(b.dataset.seg)));
 addEventListener('hashchange', () => {
   const h = location.hash.slice(1);
   if (h === 'train' && !ss) openStartModal();
@@ -513,49 +500,72 @@ function showDayLog(dateStr) {
 }
 function closeLogModal() { $('#log-modal').hidden = true; }
 
-/* ===== Calendario ===== */
+/* ===== Programas: tarjetas + push screen ===== */
 function renderWeek() {
   const root = $('#programs-week');
   if (!root) return;
   const todayKey = getTodayKey();
-  let html = '';
-  DAYS.forEach(d => {
-    const day = ensureDay(d.k);
-    const isToday = d.k === todayKey;
-    const nEx = day.exercises.length;
-    const mus = dayMuscles(day).slice(0, 3).map(k => MG[k].label).join(', ');
-    const summary = nEx ? `${nEx} ejercicio${nEx > 1 ? 's' : ''}${day.title ? ' · ' + day.title : ''}${mus ? ' · ' + mus : ''}` : 'Sin rutina';
-    html += `<div class="day-card${isToday ? ' today' : ''}${day._open ? ' open' : ''}" data-day="${d.k}">
-      <div class="day-hd" role="button" tabindex="0" aria-expanded="${!!day._open}" onclick="toggleDay('${d.k}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDay('${d.k}')}">
-        <span class="badge">${d.short}</span>
-        <div class="info"><strong>${d.n}${isToday ? ' · Hoy' : ''}</strong><span>${esc(summary)}</span></div>
-        <span class="chev">▾</span>
-      </div>
-      <div class="day-body">
-        <div class="day-title">
-          <input class="inp l" placeholder="Nombre de la rutina (ej. Push, Piernas…)" maxlength="40"
-            value="${esc(day.title)}" oninput="setDayTitle('${d.k}', this.value)">
-        </div>
-        ${day.exercises.length ? day.exercises.map((e, i) => planExCard(d.k, e, i)).join('') : '<div class="day-empty">Aún no hay ejercicios para este día</div>'}
-        <div class="addx" style="margin-top:8px">
-          <input class="inp l" id="nx-${d.k}" list="exlist-plan" placeholder="Nombre del ejercicio" maxlength="40"
-            onkeydown="if(event.key==='Enter')addPlanEx('${d.k}')">
-        </div>
-        <button class="btn g" onclick="addPlanEx('${d.k}')">+ Agregar ejercicio</button>
-      </div>
-    </div>`;
-  });
-  const names = [...new Set([...allExercises().map(e => e.name), ...S.logs.flatMap(l => l.entries.map(e => e.name))])];
-  html += `<datalist id="exlist-plan">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>`;
-  root.innerHTML = html;
+  root.innerHTML = DAYS.map(d => {
+    const day = ensureDay(d.k), n = day.exercises.length, isToday = d.k === todayKey;
+    const prev = day.exercises.slice(0, 3).map(e => `<li>${esc(e.name)}</li>`).join('')
+      + (n > 3 ? `<li class="more">+${n - 3} más</li>` : '');
+    return `<button type="button" class="dcard${isToday ? ' today' : ''}${n ? '' : ' rest'}" onclick="openDay('${d.k}')">
+      <span class="badge">${d.short}</span>
+      <span class="dc-info">
+        <strong>${d.n}${isToday ? '<em class="today-pill">Hoy</em>' : ''}</strong>
+        <small>${esc(day.title || (n ? 'Rutina' : 'Descanso'))}${n ? ' · ' + n + ' ejercicio' + (n > 1 ? 's' : '') : ''}</small>
+        ${n ? `<ul class="dc-prev">${prev}</ul>${muscleChips(day)}` : '<span class="dc-empty">Sin rutina · toca para armarla</span>'}
+      </span>
+      <span class="chev" aria-hidden="true">›</span>
+    </button>`;
+  }).join('');
+  if (openDayKey) renderDayScreen();
 }
-function toggleDay(key) {
-  const day = ensureDay(key);
-  day._open = !day._open;
-  DAYS.forEach(d => { if (d.k !== key) ensureDay(d.k)._open = false; });
+
+function openDay(key) {
+  clearTimeout(dayCloseTimer);
+  openDayKey = key;
+  const sc = $('#day-screen'), body = $('#day-body');
+  sc.hidden = false;
+  body.classList.add('stagger');
+  renderDayScreen();
+  $('#day-scroll').scrollTop = 0;
+  requestAnimationFrame(() => requestAnimationFrame(() => sc.classList.add('show')));
+  setTimeout(() => body.classList.remove('stagger'), 1000);
+}
+
+function closeDay() {
+  const sc = $('#day-screen');
+  if (!sc || sc.hidden) return;
+  openDayKey = null;
+  sc.classList.remove('show');
+  dayCloseTimer = setTimeout(() => { sc.hidden = true; }, 300);
   renderWeek();
-  const card = document.querySelector(`.day-card[data-day="${key}"]`);
-  if (card && day._open) setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+}
+
+function renderDayScreen() {
+  const key = openDayKey;
+  if (!key) return;
+  const d = DAYS.find(x => x.k === key), day = ensureDay(key);
+  const names = [...new Set([...allExercises().map(e => e.name), ...S.logs.flatMap(l => l.entries.map(e => e.name))])];
+  const sc = $('#day-scroll'), top = sc.scrollTop;
+  $('#day-name').textContent = d.n;
+  $('#day-today').hidden = key !== getTodayKey();
+  $('#day-body').innerHTML = `
+    <div class="day-title">
+      <input class="inp l" placeholder="Nombre de la rutina (ej. Push, Piernas…)" maxlength="40"
+        value="${esc(day.title)}" oninput="setDayTitle('${key}', this.value)">
+    </div>
+    ${day.exercises.length
+      ? day.exercises.map((e, i) => `<div class="dx" style="--i:${i}">${planExCard(key, e, i)}</div>`).join('')
+      : '<div class="empty dx" style="--i:0"><strong>Día libre</strong><span>Aún no hay ejercicios para este día.</span></div>'}
+    <div class="addx dx" style="--i:${day.exercises.length}">
+      <input class="inp l" id="nx-${key}" list="exlist-plan" placeholder="Nombre del ejercicio" maxlength="40"
+        onkeydown="if(event.key==='Enter')addPlanEx('${key}')">
+    </div>
+    <button class="btn g dx" style="--i:${day.exercises.length + 1}" onclick="addPlanEx('${key}')">+ Agregar ejercicio</button>
+    <datalist id="exlist-plan">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>`;
+  sc.scrollTop = top;
 }
 function setDayTitle(key, val) { ensureDay(key).title = val; saveLogs(); }
 function planExCard(key, e, i) {
@@ -627,63 +637,7 @@ function openStartModal() {
 function closeStartModal() { $('#start-modal').hidden = true; }
 function confirmStart() { closeStartModal(); startSess(true); show('train'); }
 
-/* ===== Galería ===== */
-function renderGallery() {
-  const root = $('#gallery-root');
-  if (!root) return;
-  const list = allExercises().filter(e => {
-    if (galCat !== 'all' && e.cat !== galCat) return false;
-    if (galEquip !== 'all' && e.equip !== galEquip) return false;
-    if (galQ && !e.name.toLowerCase().includes(galQ)) return false;
-    if (selectedMuscle) {
-      const pri = e.primary || [], sec = e.secondary || [];
-      if (!pri.includes(selectedMuscle) && !sec.includes(selectedMuscle) && e.cat !== selectedMuscle) return false;
-    }
-    return true;
-  }).sort((a, b) => a.name.localeCompare(b.name, 'es'));
-
-  root.innerHTML = `
-    <div class="map-wrap">
-      <div class="map-hd">
-        <strong>Mapa muscular</strong><span class="mu" style="font-size:.75rem;display:block;font-weight:400">Toca un músculo para filtrar</span>
-        <div class="map-tog">
-          <button class="${mapSide === 'front' ? 'on' : ''}" onclick="setMapSide('front')">Frente</button>
-          <button class="${mapSide === 'back' ? 'on' : ''}" onclick="setMapSide('back')">Espalda</button>
-        </div>
-      </div>
-      <div class="map-svg-box" id="gal-map">${muscleSVG(mapSide, getSessionHeat())}</div>
-      <div class="map-legend">${MGROUPS.map(m => `<span><i style="background:${m.color}"></i>${m.label}</span>`).join('')}</div>
-    </div>
-    <div class="search-bar">
-      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
-      <input class="inp l" id="gal-search" placeholder="Buscar ejercicio…" value="${esc(galQ)}"
-        oninput="galQ=this.value.toLowerCase();renderGallery()">
-    </div>
-    <div class="cat-row">
-      <button class="cat-btn ${galCat === 'all' ? 'on' : ''}" onclick="galCat='all';renderGallery()">Todos</button>
-      ${MGROUPS.map(m => `<button class="cat-btn ${galCat === m.k ? 'on' : ''}" onclick="galCat='${m.k}';renderGallery()">${m.emoji} ${m.label}</button>`).join('')}
-    </div>
-    <div class="cat-row">
-      <button class="cat-btn ${galEquip === 'all' ? 'on' : ''}" onclick="galEquip='all';renderGallery()">Cualquier equipo</button>
-      ${EQUIP.map(eq => `<button class="cat-btn ${galEquip === eq.k ? 'on' : ''}" onclick="galEquip='${eq.k}';renderGallery()">${eq.label}</button>`).join('')}
-    </div>
-    ${selectedMuscle ? `<button class="btn g" style="margin-bottom:8px" onclick="selectedMuscle=null;renderGallery()">✕ Quitar filtro: ${MG[selectedMuscle]?.label || selectedMuscle}</button>` : ''}
-    <button class="btn g" style="margin-bottom:12px" onclick="openCustomModal()">+ Agregar ejercicio personalizado</button>
-    ${list.length ? list.map(e => exItemHTML(e)).join('') : '<div class="empty"><strong>Sin resultados</strong><span>Prueba otro nombre o quita los filtros.</span></div>'}
-  `;
-}
-function exItemHTML(e) {
-  const mg = MG[e.cat] || MGROUPS[0];
-  const tags = [
-    ...(e.primary || []).map(k => `<span class="mtag p">${MG[k]?.label || k}</span>`),
-    ...(e.secondary || []).map(k => `<span class="mtag s">${MG[k]?.label || k}</span>`)
-  ].join('');
-  return `<div class="ex-item" role="button" tabindex="0" onclick="highlightMuscles('${esc(e.name)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();highlightMuscles('${esc(e.name)}')}">
-    <div class="ico" style="background:color-mix(in srgb,${mg.color} 20%,transparent)">${mg.emoji}</div>
-    <div class="meta"><strong>${esc(e.name)}</strong><div class="muscle-tags">${tags}</div></div>
-    <button class="add-btn" onclick="event.stopPropagation();quickAddToToday('${esc(e.name)}')" title="Agregar a hoy" aria-label="Agregar ${esc(e.name)} a hoy">+</button>
-  </div>`;
-}
+/* ===== Mapa muscular ===== */
 function setMapSide(side) {
   mapSide = side;
   const box = $('#gal-map');
@@ -698,35 +652,8 @@ function setMapSide(side) {
 
 function selectMuscle(k) {
   selectedMuscle = selectedMuscle === k ? null : k;
-  if (selectedMuscle) {
-    galCat = 'all';
-    toast('Ejercicios: ' + (MG[k]?.label || k));
-  } else {
-    toast('Filtro muscular quitado');
-  }
-  show('programs');
-  showSeg('gallery');
-  renderGallery();
-}
-
-function highlightMuscles(name) {
-  const { primary, secondary } = getMuscles(name);
-  const heat = {};
-  primary.forEach(k => heat[k] = 4);
-  secondary.forEach(k => heat[k] = Math.max(heat[k] || 0, 2));
-  const box = $('#gal-map');
-  if (box) box.innerHTML = muscleSVG(mapSide, heat);
-}
-function quickAddToToday(name) {
-  const key = getTodayKey();
-  const day = ensureDay(key);
-  const last = lastSets(name);
-  const sets = last && last.length ? last.map(s => ({ kg: s.kg || '', reps: s.reps || '' })) : [{ kg: '', reps: '' }, { kg: '', reps: '' }, { kg: '', reps: '' }];
-  day.exercises.push({ name, rest: 90, sets });
-  day._open = true;
-  saveLogs();
-  const btn = event?.target;
-  if (btn) { btn.textContent = '✓'; setTimeout(() => { btn.textContent = '+'; }, 800); }
+  toast(selectedMuscle ? 'Músculo: ' + (MG[k]?.label || k) : 'Selección quitada');
+  refreshHomeMap();
 }
 
 let customSel = { cat: 'pecho', pri: [], sec: [] };
@@ -759,7 +686,7 @@ function saveCustomEx() {
   S.customEx.push({ name, cat: customSel.cat, primary: [...customSel.pri], secondary: [...customSel.sec].filter(k => !customSel.pri.includes(k)) });
   saveLogs();
   closeCustomModal();
-  renderGallery();
+  if (openDayKey) renderDayScreen();
 }
 
 /* ===== SVG Mapa ===== */
@@ -1099,10 +1026,7 @@ function setUnits(u) {
   // refresh open views that show weights
   if (!$('.view[data-view="stats"]').hidden) renderStats();
   if (!$('.view[data-view="train"]').hidden) renderTrain();
-  if (!$('.view[data-view="programs"]').hidden) {
-    const seg = $$('.seg button.active')[0]?.dataset.seg;
-    if (seg === 'routines') renderWeek();
-  }
+  if (!$('.view[data-view="programs"]').hidden) renderWeek();
 }
 
 function exportData() {
