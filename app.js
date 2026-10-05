@@ -1,3 +1,20 @@
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDViVTXXf4nByWujEO22kHft9NLquyAo-U",
+  authDomain: "consistency-app2.firebaseapp.com",
+  projectId: "consistency-app2",
+  storageBucket: "consistency-app2.firebasestorage.app",
+  messagingSenderId: "49921845728",
+  appId: "1:49921845728:web:4ef4e46e292c62edb32385"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 'use strict';
 const VIEWS = ['home', 'stats', 'train', 'programs', 'profile'];
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
