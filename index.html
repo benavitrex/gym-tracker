@@ -3,18 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0C0C0E" id="meta-theme">
+<meta name="theme-color" content="#0F1216" id="meta-theme">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GymTracker">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/svg+xml" href="logo.svg">
 <link rel="icon" type="image/png" href="favicon.png">
 <meta name="description" content="GymTracker — registra entrenamientos, rutinas semanales y progreso. PWA offline.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Inter:wght@400;500;600;700;800&display=swap">
 <meta name="format-detection" content="telephone=no">
 <link rel="stylesheet" href="styles.css">
 <title>GymTracker</title>
@@ -25,7 +26,13 @@
 
   <!-- 1. INICIO -->
   <section class="view" data-view="home" aria-labelledby="t-home">
-    <header class="vh"><h1 id="t-home">Inicio</h1><p>Tu resumen de hoy</p></header>
+    <header class="vh brandhd">
+      <h1 id="t-home" class="brand">
+        <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><path class="bm-arc" pathLength="1" d="M47.61 17.95A21 21 0 1 0 47.61 46.05"/><circle class="bm-dot" cx="53" cy="32" r="3.8"/></svg>
+        <span class="brand-w" id="brand-w">Consistency</span>
+      </h1>
+      <p>Tu resumen de hoy</p>
+    </header>
     <div id="home-root"></div>
   </section>
 
@@ -40,9 +47,9 @@
     <div id="train-root"></div>
   </section>
 
-  <!-- 4. PROGRAMAS -->
+  <!-- 4. RUTINA -->
   <section class="view" data-view="programs" aria-labelledby="t-programs" hidden>
-    <header class="vh"><h1 id="t-programs">Programas</h1><p>Tu semana de entrenamiento</p></header>
+    <header class="vh"><h1 id="t-programs">Rutina</h1><p>Tu semana de entrenamiento</p></header>
     <p class="hint">Toca un día para ver o editar su rutina. El de hoy se carga automáticamente al entrenar.</p>
     <div id="programs-week"></div>
   </section>
@@ -57,7 +64,7 @@
 
 <nav class="bottom-nav" aria-label="Navegación principal">
   <button class="nav-btn" data-go="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Inicio</span></button>
-  <button class="nav-btn" data-go="programs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>Programas</span></button>
+  <button class="nav-btn" data-go="programs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>Rutina</span></button>
   <button class="nav-btn" data-go="stats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 20v-8M12 20V5M18 20v-11"/></svg><span>Stats</span></button>
   <button class="nav-btn" data-go="profile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span>Perfil</span></button>
 </nav>
@@ -94,11 +101,32 @@
 <div class="modal-bg" id="start-modal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <h2 id="modal-title">¿Estás listo para entrenar?</h2>
-    <p id="modal-desc">Se cargará la rutina programada para hoy.</p>
+    <p id="modal-desc">Se cargará la rutina de hoy.</p>
     <div class="day-preview" id="modal-preview" hidden></div>
     <div class="actions">
       <button class="btn g" onclick="closeStartModal()">Cancelar</button>
       <button class="btn" onclick="confirmStart()">Empezar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Selector de ejercicios por categoría -->
+<div class="modal-bg" id="pick-modal" hidden>
+  <div class="modal pick" role="dialog" aria-modal="true" aria-labelledby="pk-title">
+    <div class="pk-grab" aria-hidden="true"></div>
+    <div class="pk-hd">
+      <div><h2 id="pk-title">Agregar ejercicios</h2><p id="pk-sub"></p></div>
+      <button type="button" class="pk-x" onclick="closePicker()" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="pk-search">
+      <input class="inp l" id="pk-q" type="search" placeholder="Buscar ejercicio" autocomplete="off" enterkeyhint="search"
+        oninput="renderPickList(false)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}">
+    </div>
+    <div class="catrow pk-cats" id="pk-cats" role="group" aria-label="Categoría"></div>
+    <div class="pk-list" id="pk-list"></div>
+    <div class="pk-ft">
+      <button type="button" class="btn g" onclick="newFromPicker()">+ Crear ejercicio</button>
+      <button type="button" class="btn" id="pk-done" onclick="closePicker()">Listo</button>
     </div>
   </div>
 </div>
